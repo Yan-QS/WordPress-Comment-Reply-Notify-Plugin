@@ -226,6 +226,33 @@
                 <button type="submit" name="pcn_clear_credentials" class="button" onclick="return confirm('<?php echo esc_js( __( '确定要清除所有已保存的敏感凭据吗？推荐通过环境变量提供凭据。', 'wp-comment-notify' ) ); ?>');"><?php esc_html_e('清除凭据', 'wp-comment-notify'); ?></button>
                 <?php wp_nonce_field('pcn_clear_credentials'); ?>
             </p>
+            <h3 style="margin-top:20px;"><?php _e('邮件队列设置', 'wp-comment-notify'); ?></h3>
+            <p class="description"><?php _e('启用异步邮件队列以减少请求阻塞并支持重试/重试退避。', 'wp-comment-notify'); ?></p>
+            <table class="form-table">
+                <tr>
+                    <th scope="row"><?php _e('启用队列', 'wp-comment-notify'); ?></th>
+                    <td><label><input type="checkbox" name="pcn_queue_enabled" value="1" <?php checked(! empty($smtp_options['queue_enabled'])); ?> /> <?php _e('启用异步队列（推荐）', 'wp-comment-notify'); ?></label></td>
+                </tr>
+                <tr>
+                    <th scope="row"><?php _e('批次大小', 'wp-comment-notify'); ?></th>
+                    <td><input type="number" name="pcn_queue_batch" value="<?php echo esc_attr($smtp_options['queue_batch'] ?? 10); ?>" class="small-text" /> <span class="description"><?php _e('每次处理队列的最大邮件数。', 'wp-comment-notify'); ?></span></td>
+                </tr>
+                <tr>
+                    <th scope="row"><?php _e('最大重试次数', 'wp-comment-notify'); ?></th>
+                    <td><input type="number" name="pcn_queue_retries" value="<?php echo esc_attr($smtp_options['queue_retries'] ?? 5); ?>" class="small-text" /> <span class="description"><?php _e('超过次数后将放弃并记录错误。', 'wp-comment-notify'); ?></span></td>
+                </tr>
+                <tr>
+                    <th scope="row"><?php _e('队列操作', 'wp-comment-notify'); ?></th>
+                    <td>
+                        <input type="submit" name="pcn_process_queue" class="button" value="<?php esc_attr_e('立即处理队列', 'wp-comment-notify'); ?>" />
+                        &nbsp;
+                        <input type="submit" name="pcn_clear_queue" class="button" onclick="return confirm('<?php echo esc_js( __( '确定要清空邮件队列吗？此操作不可恢复。', 'wp-comment-notify' ) ); ?>');" value="<?php esc_attr_e('清空队列', 'wp-comment-notify'); ?>" />
+                        <?php if (! empty($queue_count)): ?>
+                            <p class="description"><?php printf(__('当前队列中有 %d 条待发送邮件。', 'wp-comment-notify'), intval($queue_count)); ?></p>
+                        <?php endif; ?>
+                    </td>
+                </tr>
+            </table>
         </table>
 
         </div> <!-- End tab-smtp -->

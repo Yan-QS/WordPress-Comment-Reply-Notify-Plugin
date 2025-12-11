@@ -64,6 +64,15 @@ class PCN_Settings {
             wp_enqueue_editor();
         }
 
+        // Prepare queue info for view
+        $queue = get_option('pcn_email_queue', array());
+        $queue_count = is_array($queue) ? count($queue) : 0;
+        $smtp_options = array(
+            'queue_enabled' => get_option('pcn_queue_enabled', 1),
+            'queue_batch' => get_option('pcn_queue_batch', 10),
+            'queue_retries' => get_option('pcn_queue_retries', 5),
+        );
+
         // Include view
         include PCN_PLUGIN_DIR . 'includes/views/settings-page.php';
     }
@@ -120,6 +129,21 @@ class PCN_Settings {
             } else {
                 echo '<div class="error"><p>' . __('请提供大于 0 的保留天数。', 'wp-comment-notify') . '</p></div>';
             }
+        }
+
+        // Manual queue processing / clearing (from settings page)
+        if (isset($_POST['pcn_process_queue']) && check_admin_referer('pcn_save_settings')) {
+            if (class_exists('PCN_Mailer') && method_exists('PCN_Mailer', 'process_queue')) {
+                PCN_Mailer::process_queue();
+                echo '<div class="updated"><p>' . __('队列已处理（尽可能处理批次内邮件）。', 'wp-comment-notify') . '</p></div>';
+            } else {
+                echo '<div class="error"><p>' . __('队列处理器不可用。', 'wp-comment-notify') . '</p></div>';
+            }
+        }
+
+        if (isset($_POST['pcn_clear_queue']) && check_admin_referer('pcn_save_settings')) {
+            delete_option('pcn_email_queue');
+            echo '<div class="updated"><p>' . __('邮件队列已清空。', 'wp-comment-notify') . '</p></div>';
         }
     }
 
@@ -320,6 +344,14 @@ class PCN_Settings {
             }
         }
         update_option('pcn_smtp_settings', $smtp);
+
+        // Queue settings
+        $queue_enabled = ! empty($_POST['pcn_queue_enabled']) ? 1 : 0;
+        update_option('pcn_queue_enabled', $queue_enabled);
+        $batch = isset($_POST['pcn_queue_batch']) ? max(1, intval($_POST['pcn_queue_batch'])) : 10;
+        update_option('pcn_queue_batch', $batch);
+        $retries = isset($_POST['pcn_queue_retries']) ? max(0, intval($_POST['pcn_queue_retries'])) : 5;
+        update_option('pcn_queue_retries', $retries);
 
         // 模板编辑
         $templates = array();
