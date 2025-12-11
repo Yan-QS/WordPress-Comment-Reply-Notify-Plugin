@@ -7,6 +7,18 @@ class PCN_Unsubscribe {
 
     public static function init() {
         add_action('init', array(__CLASS__, 'handle_unsubscribe_request'));
+        // Register REST routes for secure unsubscribe link handling
+        add_action('rest_api_init', array(__CLASS__, 'register_rest_routes'));
+    }
+
+    public static function register_rest_routes() {
+        if (function_exists('register_rest_route')) {
+            register_rest_route('pcn/v1', '/unsubscribe', array(
+                'methods' => WP_REST_Server::READABLE,
+                'callback' => array(__CLASS__, 'rest_unsubscribe_handler'),
+                'permission_callback' => '__return_true',
+            ));
+        }
     }
 
     public static function handle_unsubscribe_request() {
@@ -42,12 +54,81 @@ class PCN_Unsubscribe {
         $email = sanitize_email($email);
         $ts = time();
         $sig = self::generate_sig($email, $ts);
-        return add_query_arg(array(
-            'pcn_action' => 'unsubscribe',
-            'email' => urlencode($email),
+        // Point to REST route; keep same query params for compatibility
+        $base = rest_url('pcn/v1/unsubscribe');
+        $args = array(
+            'email' => rawurlencode($email),
             'ts' => $ts,
             'sig' => $sig,
-        ), home_url('/'));
+        );
+        return esc_url_raw(add_query_arg($args, $base));
+    }
+
+    public static function rest_unsubscribe_handler($request) {
+        $params = $request->get_params();
+        $email = isset($params['email']) ? sanitize_email(rawurldecode($params['email'])) : '';
+        $ts = isset($params['ts']) ? intval($params['ts']) : 0;
+        $sig = isset($params['sig']) ? sanitize_text_field($params['sig']) : '';
+
+        // Basic validation
+        if (empty($email) || ! is_email($email) || empty($ts) || empty($sig)) {
+            return new WP_REST_Response(array('success' => false, 'message' => __('Invalid request', 'wp-comment-notify')), 400);
+        }
+
+        // Rate limiting: limit to 10 attempts per hour per IP+email
+        $ip = '';
+        $server = $request->get_server_params();
+        if (! empty($server['REMOTE_ADDR'])) { $ip = $server['REMOTE_ADDR']; }
+        $rl_key = 'pcn_unsub_rl_' . md5($ip . '|' . $email);
+        $rl = get_transient($rl_key);
+        if (! is_array($rl)) { $rl = array('count' => 0, 'first' => time()); }
+        $rl['count'] = intval($rl['count']) + 1;
+        // window 1 hour
+        $window = 3600;
+        if ($rl['count'] > 10) {
+            return new WP_REST_Response(array('success' => false, 'message' => __('Too many unsubscribe attempts, please try later.', 'wp-comment-notify')), 429);
+        }
+        set_transient($rl_key, $rl, $window);
+
+        // Verify signature and expiry (7 days)
+        $max_age = 7 * 24 * 3600;
+        if (! self::verify_sig($email, $ts, $sig)) {
+            self::log_unsubscribe_action($email, $ip, false, 'invalid_sig');
+            return new WP_REST_Response(array('success' => false, 'message' => __('Signature invalid or tampered.', 'wp-comment-notify')), 403);
+        }
+        if (time() - $ts > $max_age) {
+            self::log_unsubscribe_action($email, $ip, false, 'expired');
+            return new WP_REST_Response(array('success' => false, 'message' => __('Link expired.', 'wp-comment-notify')), 410);
+        }
+
+        // Already unsubscribed?
+        if (self::is_unsubscribed($email)) {
+            self::log_unsubscribe_action($email, $ip, false, 'already_unsubscribed');
+            return new WP_REST_Response(array('success' => true, 'message' => __('Already unsubscribed.', 'wp-comment-notify')));
+        }
+
+        // Record and respond
+        self::add_to_blocklist($email, $ts);
+        self::log_unsubscribe_action($email, $ip, true, 'ok');
+        return new WP_REST_Response(array('success' => true, 'message' => __('You have been unsubscribed.', 'wp-comment-notify')));
+    }
+
+    private static function log_unsubscribe_action($email, $ip, $success, $reason = '') {
+        $actions = get_option('pcn_unsubscribe_actions', array());
+        if (! is_array($actions)) { $actions = array(); }
+        $actions[] = array(
+            'time' => current_time('mysql'),
+            'email' => $email,
+            'ip' => $ip,
+            'success' => $success ? 1 : 0,
+            'reason' => $reason,
+        );
+        // keep last 500 actions
+        if (count($actions) > 500) { $actions = array_slice($actions, -500); }
+        update_option('pcn_unsubscribe_actions', $actions, false);
+        if (class_exists('PCN_Settings') && method_exists('PCN_Settings', 'debug_log_append')) {
+            PCN_Settings::debug_log_append('[unsubscribe] ' . ($success ? 'ok' : 'fail') . ' ' . $email . ' ip=' . $ip . ' reason=' . $reason);
+        }
     }
 
     public static function is_unsubscribed($email) {
