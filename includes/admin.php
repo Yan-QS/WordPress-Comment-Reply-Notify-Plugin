@@ -39,8 +39,8 @@ function pcn_debug_log_append($line) {
 
 function pcn_add_admin_menu() {
     add_options_page(
-        'WP Comment Notify',
-        'WP Comment Notify',
+        __('WP Comment Notify', 'wp-comment-notify'),
+        __('WP Comment Notify', 'wp-comment-notify'),
         'manage_options',
         'wp-comment-notify',
         'pcn_options_page'
@@ -82,8 +82,8 @@ function pcn_options_page() {
     if (isset($_POST['pcn_test_smtp']) && check_admin_referer('pcn_test_smtp')) {
         $test_to = sanitize_email($_POST['test_to'] ?? '');
         if (! empty($test_to)) {
-            $subject = 'WP Comment Notify SMTP 测试';
-            $message = '<p>这是一封测试邮件，用于验证当前 SMTP/TLS/OAuth 配置是否可用。</p>';
+            $subject = __('WP Comment Notify SMTP 测试', 'wp-comment-notify');
+            $message = '<p>' . __('这是一封测试邮件，用于验证当前 SMTP/TLS/OAuth 配置是否可用。', 'wp-comment-notify') . '</p>';
             // 启用 HTML 发送（具名过滤器便于移除）
             add_filter('wp_mail_content_type', 'pcn_admin_html_content_type');
             // 仅在本次测试中打开 PHPMailer 的调试输出并写入 error_log（具名，便于移除）
@@ -106,11 +106,11 @@ function pcn_options_page() {
             remove_action('phpmailer_init', 'pcn_admin_debug_hook');
 
             if ($ok) {
-                echo '<div class="updated"><p>测试邮件已发送，请检查收件箱：' . esc_html($test_to) . '</p></div>';
+                echo '<div class="updated"><p>' . sprintf(__('测试邮件已发送，请检查收件箱：%s', 'wp-comment-notify'), esc_html($test_to)) . '</p></div>';
                 if (! empty($err)) {
-                    echo '<div class="notice"><p>PHPMailer 提示信息：' . esc_html($err) . '</p></div>';
+                    echo '<div class="notice"><p>' . sprintf(__('PHPMailer 提示信息：%s', 'wp-comment-notify'), esc_html($err)) . '</p></div>';
                 } else {
-                    echo '<div class="notice"><p>PHPMailer 未返回错误信息。如未收到邮件，请查看服务器日志中以 “pcn SMTP debug” 开头的记录。</p></div>';
+                    echo '<div class="notice"><p>' . __('PHPMailer 未返回错误信息。如未收到邮件，请查看服务器日志中以 “pcn SMTP debug” 开头的记录。', 'wp-comment-notify') . '</p></div>';
                 }
                 // 记录一次当前有效的 SMTP 设置快照，便于对比其他插件
                 $snap = get_option('pcn_smtp_settings', array());
@@ -125,11 +125,11 @@ function pcn_options_page() {
                 );
                 pcn_debug_log_append('[settings-snapshot] ' . wp_json_encode($safeSnap));
             } else {
-                $msg = '测试邮件发送失败。';
+                $msg = __('测试邮件发送失败。', 'wp-comment-notify');
                 if (! empty($err)) {
-                    $msg .= ' 错误信息：' . esc_html($err);
+                    $msg .= ' ' . sprintf(__('错误信息：%s', 'wp-comment-notify'), esc_html($err));
                 } else {
-                    $msg .= ' 请检查 SMTP 设置与服务器日志（搜索 “pcn SMTP debug”）。';
+                    $msg .= ' ' . __('请检查 SMTP 设置与服务器日志（搜索 “pcn SMTP debug”）。', 'wp-comment-notify');
                 }
                 echo '<div class="error"><p>' . $msg . '</p></div>';
                 // 同步写入错误信息到调试日志
@@ -149,7 +149,7 @@ function pcn_options_page() {
                 pcn_debug_log_append('[settings-snapshot] ' . wp_json_encode($safeSnap));
             }
         } else {
-            echo '<div class="error"><p>请填写有效的测试收件人邮箱。</p></div>';
+            echo '<div class="error"><p>' . __('请填写有效的测试收件人邮箱。', 'wp-comment-notify') . '</p></div>';
         }
     }
 
@@ -164,9 +164,11 @@ function pcn_options_page() {
                 update_option('pcn_license_key', '');
                 update_option('pcn_license_status', 'invalid');
             } else {
-                $response = wp_remote_get('https://yanqs.me/Verification/verify.php?pass=' . $new_key);
+                // Base64 encoded: https://yanqs.me/Verification/verify.php?pass=
+                $api_url = base64_decode('aHR0cHM6Ly95YW5xcy5tZS9WZXJpZmljYXRpb24vdmVyaWZ5LnBocD9wYXNzPQ==');
+                $response = wp_remote_get($api_url . $new_key);
                 if (is_wp_error($response)) {
-                    echo '<div class="error"><p>密钥验证请求失败：' . esc_html($response->get_error_message()) . '</p></div>';
+                    echo '<div class="error"><p>' . sprintf(__('密钥验证请求失败：%s', 'wp-comment-notify'), esc_html($response->get_error_message())) . '</p></div>';
                     update_option('pcn_license_status', 'invalid');
                 } else {
                     $body = wp_remote_retrieve_body($response);
@@ -174,11 +176,11 @@ function pcn_options_page() {
                     if (isset($data['status']) && $data['status'] === 'pass') {
                         update_option('pcn_license_key', $new_key);
                         update_option('pcn_license_status', 'valid');
-                        echo '<div class="updated"><p>密钥验证成功！</p></div>';
+                        echo '<div class="updated"><p>' . __('密钥验证成功！', 'wp-comment-notify') . '</p></div>';
                     } else {
                         update_option('pcn_license_key', $new_key);
                         update_option('pcn_license_status', 'invalid');
-                        echo '<div class="error"><p>密钥无效或已过期。</p></div>';
+                        echo '<div class="error"><p>' . __('密钥无效或已过期。', 'wp-comment-notify') . '</p></div>';
                     }
                 }
             }
@@ -236,7 +238,7 @@ function pcn_options_page() {
             delete_option('pcn_templates');
         }
 
-        echo '<div class="updated"><p>设置已保存。</p></div>';
+        echo '<div class="updated"><p>' . __('设置已保存。', 'wp-comment-notify') . '</p></div>';
     }
 
     $smtp = get_option('pcn_smtp_settings', array());
@@ -254,7 +256,7 @@ function pcn_options_page() {
         if ($enabled) {
             update_option('pcn_enabled', 0);
             $enabled = 0;
-            echo '<div class="error"><p>试用期已结束，插件功能已禁用。请输入有效密钥以重新激活。</p></div>';
+            echo '<div class="error"><p>' . __('试用期已结束，插件功能已禁用。请输入有效密钥以重新激活。', 'wp-comment-notify') . '</p></div>';
         }
     }
 
@@ -321,141 +323,141 @@ function pcn_options_page() {
         </script>
 
         <div class="pcn-header">
-            <h1>WP Comment & Reply Notify 设置</h1>
-            <a href="https://yanqs.me/wp-comment-notify-plugin/" target="_blank" class="button">插件主页</a>
+            <h1><?php _e('WP Comment & Reply Notify 设置', 'wp-comment-notify'); ?></h1>
+            <a href="https://yanqs.me/wp-comment-notify-plugin/" target="_blank" class="button"><?php _e('插件主页', 'wp-comment-notify'); ?></a>
         </div>
 
         <div class="pcn-nav-tab-wrapper">
-            <a href="#" class="pcn-nav-tab active" data-target="tab-general">常规设置</a>
-            <a href="#" class="pcn-nav-tab" data-target="tab-smtp">SMTP 设置</a>
-            <a href="#" class="pcn-nav-tab" data-target="tab-templates">邮件模板</a>
-            <a href="#" class="pcn-nav-tab" data-target="tab-test">测试与日志</a>
+            <a href="#" class="pcn-nav-tab active" data-target="tab-general"><?php _e('常规设置', 'wp-comment-notify'); ?></a>
+            <a href="#" class="pcn-nav-tab" data-target="tab-smtp"><?php _e('SMTP 设置', 'wp-comment-notify'); ?></a>
+            <a href="#" class="pcn-nav-tab" data-target="tab-templates"><?php _e('邮件模板', 'wp-comment-notify'); ?></a>
+            <a href="#" class="pcn-nav-tab" data-target="tab-test"><?php _e('测试与日志', 'wp-comment-notify'); ?></a>
         </div>
 
         <form method="post">
             <?php wp_nonce_field('pcn_save_settings'); ?>
 
             <div id="tab-general" class="pcn-tab-content active">
-                <h2>授权与状态</h2>
+                <h2><?php _e('授权与状态', 'wp-comment-notify'); ?></h2>
             <p>
                 <a href="https://yanqs.me/wp-comment-notify-plugin/" target="_blank" rel="noopener noreferrer">
-                    授权密钥购买
+                    <?php _e('授权密钥购买', 'wp-comment-notify'); ?>
                 </a>
             </p>
             <table class="form-table">
                 <tr>
-                    <th scope="row">授权密钥</th>
+                    <th scope="row"><?php _e('授权密钥', 'wp-comment-notify'); ?></th>
                     <td>
                         <input type="text" name="pcn_license_key" value="<?php echo esc_attr($license_key); ?>" class="regular-text" />
                         <?php if ($is_licensed): ?>
-                            <span style="color:green;">有效</span>
+                            <span style="color:green;"><?php _e('有效', 'wp-comment-notify'); ?></span>
                         <?php else: ?>
-                            <span style="color:red;">无效</span>
+                            <span style="color:red;"><?php _e('无效', 'wp-comment-notify'); ?></span>
                         <?php endif; ?>
                     </td>
                 </tr>
                 <tr>
-                    <th scope="row">插件状态</th>
+                    <th scope="row"><?php _e('插件状态', 'wp-comment-notify'); ?></th>
                     <td>
                         <?php
                         if ($is_licensed) {
-                            echo '<span style="color:green;font-weight:bold;">已激活</span>';
+                            echo '<span style="color:green;font-weight:bold;">' . __('已激活', 'wp-comment-notify') . '</span>';
                         } elseif ($is_trial_active) {
                             $remaining_days = ceil(($trial_end_time - time()) / 86400);
-                            echo '<span style="color:orange;font-weight:bold;">试用中，剩余 ' . $remaining_days . ' 天</span>';
+                            echo '<span style="color:orange;font-weight:bold;">' . sprintf(__('试用中，剩余 %d 天', 'wp-comment-notify'), $remaining_days) . '</span>';
                         } else {
-                            echo '<span style="color:red;font-weight:bold;">试用结束，已禁用</span>';
+                            echo '<span style="color:red;font-weight:bold;">' . __('试用结束，已禁用', 'wp-comment-notify') . '</span>';
                         }
                         ?>
                     </td>
                 </tr>
             </table>
 
-            <h2>插件总开关</h2>
+            <h2><?php _e('插件总开关', 'wp-comment-notify'); ?></h2>
             <table class="form-table">
                 <tr>
-                    <th scope="row">启用插件功能</th>
-                    <td><input type="checkbox" name="pcn_enabled" value="1" <?php checked(! empty($enabled)); ?> <?php disabled(!$is_licensed && !$is_trial_active); ?> /> 启用后才会在评论提交时发送通知邮件。</td>
+                    <th scope="row"><?php _e('启用插件功能', 'wp-comment-notify'); ?></th>
+                    <td><input type="checkbox" name="pcn_enabled" value="1" <?php checked(! empty($enabled)); ?> <?php disabled(!$is_licensed && !$is_trial_active); ?> /> <?php _e('启用后才会在评论提交时发送通知邮件。', 'wp-comment-notify'); ?></td>
                 </tr>
                 <tr>
-                    <th scope="row">强制使用用户名作为发信地址</th>
+                    <th scope="row"><?php _e('强制使用用户名作为发信地址', 'wp-comment-notify'); ?></th>
                     <td>
-                        <label><input type="checkbox" name="force_from_username" value="1" <?php checked(! empty($smtp['force_from_username'])); ?> /> 将 From/Envelope Sender 统一为 SMTP 用户名（某些服务要求二者一致）。</label>
+                        <label><input type="checkbox" name="force_from_username" value="1" <?php checked(! empty($smtp['force_from_username'])); ?> /> <?php _e('将 From/Envelope Sender 统一为 SMTP 用户名（某些服务要求二者一致）。', 'wp-comment-notify'); ?></label>
                     </td>
                 </tr>
                 <tr>
-                    <th scope="row">强制 IPv4 连接</th>
+                    <th scope="row"><?php _e('强制 IPv4 连接', 'wp-comment-notify'); ?></th>
                     <td>
-                        <label><input type="checkbox" name="force_ipv4" value="1" <?php checked(! empty($smtp['force_ipv4'])); ?> /> 使用 IPv4 连接 SMTP（对 IPv6 报错如 502 Invalid input 时有帮助）。</label>
+                        <label><input type="checkbox" name="force_ipv4" value="1" <?php checked(! empty($smtp['force_ipv4'])); ?> /> <?php _e('使用 IPv4 连接 SMTP（对 IPv6 报错如 502 Invalid input 时有帮助）。', 'wp-comment-notify'); ?></label>
                     </td>
                 </tr>
 
             </table>
             </div> <!-- End tab-general -->
             <div id="tab-smtp" class="pcn-tab-content">
-            <h2>SMTP 设置</h2>
+            <h2><?php _e('SMTP 设置', 'wp-comment-notify'); ?></h2>
             <table class="form-table">
                 <tr>
-                    <th scope="row">启用 SMTP</th>
+                    <th scope="row"><?php _e('启用 SMTP', 'wp-comment-notify'); ?></th>
                     <td><input type="checkbox" name="enable_smtp" value="1" <?php checked(! empty($smtp['enable_smtp'])); ?> /></td>
                 </tr>
                 <tr>
-                    <th scope="row">主机</th>
+                    <th scope="row"><?php _e('主机', 'wp-comment-notify'); ?></th>
                     <td><input type="text" name="host" value="<?php echo esc_attr($smtp['host'] ?? ''); ?>" class="regular-text" /></td>
                 </tr>
                 <tr>
-                    <th scope="row">端口</th>
+                    <th scope="row"><?php _e('端口', 'wp-comment-notify'); ?></th>
                     <td><input type="number" name="port" value="<?php echo esc_attr($smtp['port'] ?? 587); ?>" class="small-text" /></td>
                 </tr>
                 <tr>
-                    <th scope="row">加密</th>
+                    <th scope="row"><?php _e('加密', 'wp-comment-notify'); ?></th>
                     <td>
                         <select name="encryption">
-                            <option value="" <?php selected($smtp['encryption'] ?? '', ''); ?>>无</option>
+                            <option value="" <?php selected($smtp['encryption'] ?? '', ''); ?>><?php _e('无', 'wp-comment-notify'); ?></option>
                             <option value="ssl" <?php selected($smtp['encryption'] ?? '', 'ssl'); ?>>SSL</option>
                             <option value="tls" <?php selected($smtp['encryption'] ?? '', 'tls'); ?>>TLS</option>
                         </select>
                     </td>
                 </tr>
                 <tr>
-                    <th scope="row">需要身份验证</th>
+                    <th scope="row"><?php _e('需要身份验证', 'wp-comment-notify'); ?></th>
                     <td><input type="checkbox" name="smtp_auth" value="1" <?php checked(! empty($smtp['smtp_auth'])); ?> /></td>
                 </tr>
                 <tr>
-                    <th scope="row">认证类型</th>
+                    <th scope="row"><?php _e('认证类型', 'wp-comment-notify'); ?></th>
                     <td>
                         <select name="auth_type" id="pcn-auth-type-select">
-                            <option value="login" <?php selected($smtp['auth_type'] ?? '', 'login'); ?>>普通登录 (用户名/密码)</option>
-                            <option value="oauth2" <?php selected($smtp['auth_type'] ?? '', 'oauth2'); ?>>OAuth2 (若支持)</option>
+                            <option value="login" <?php selected($smtp['auth_type'] ?? '', 'login'); ?>><?php _e('普通登录 (用户名/密码)', 'wp-comment-notify'); ?></option>
+                            <option value="oauth2" <?php selected($smtp['auth_type'] ?? '', 'oauth2'); ?>><?php _e('OAuth2 (若支持)', 'wp-comment-notify'); ?></option>
                         </select>
-                        <p class="description">普通登录下可选择具体登录机制（LOGIN/PLAIN）。</p>
+                        <p class="description"><?php _e('普通登录下可选择具体登录机制（LOGIN/PLAIN）。', 'wp-comment-notify'); ?></p>
                     </td>
                 </tr>
                 <tr class="pcn-auth-login">
-                    <th scope="row">用户名</th>
+                    <th scope="row"><?php _e('用户名', 'wp-comment-notify'); ?></th>
                     <td><input type="text" name="username" value="<?php echo esc_attr($smtp['username'] ?? ''); ?>" class="regular-text" /></td>
                 </tr>
                 <tr class="pcn-auth-login">
-                    <th scope="row">密码</th>
+                    <th scope="row"><?php _e('密码', 'wp-comment-notify'); ?></th>
                     <td><input type="password" name="password" value="<?php echo esc_attr($smtp['password'] ?? ''); ?>" class="regular-text" /></td>
                 </tr>
                 <tr>
-                    <th scope="row">发信邮箱 (From)</th>
+                    <th scope="row"><?php _e('发信邮箱 (From)', 'wp-comment-notify'); ?></th>
                     <td><input type="email" name="from_email" value="<?php echo esc_attr($smtp['from_email'] ?? ''); ?>" class="regular-text" placeholder="no-reply@example.com" />
-                        <p class="description">用于邮件的发件人地址（可与 SMTP 用户名不同）。</p>
+                        <p class="description"><?php _e('用于邮件的发件人地址（可与 SMTP 用户名不同）。', 'wp-comment-notify'); ?></p>
                     </td>
                 </tr>
                 <tr>
-                    <th scope="row">发信名称 (From Name)</th>
+                    <th scope="row"><?php _e('发信名称 (From Name)', 'wp-comment-notify'); ?></th>
                     <td><input type="text" name="from_name" value="<?php echo esc_attr($smtp['from_name'] ?? ''); ?>" class="regular-text" placeholder="<?php echo esc_attr(get_bloginfo('name')); ?>" />
-                        <p class="description">用于显示在收件人处的发件人名称，留空则使用站点名称。</p>
+                        <p class="description"><?php _e('用于显示在收件人处的发件人名称，留空则使用站点名称。', 'wp-comment-notify'); ?></p>
                     </td>
                 </tr>
                 <tr class="pcn-auth-login">
-                    <th scope="row">登录机制</th>
+                    <th scope="row"><?php _e('登录机制', 'wp-comment-notify'); ?></th>
                     <td>
                         <select name="login_mechanism">
-                            <option value="AUTO" <?php selected($smtp['login_mechanism'] ?? 'AUTO', 'AUTO'); ?>>自动协商</option>
+                            <option value="AUTO" <?php selected($smtp['login_mechanism'] ?? 'AUTO', 'AUTO'); ?>><?php _e('自动协商', 'wp-comment-notify'); ?></option>
                             <option value="LOGIN" <?php selected($smtp['login_mechanism'] ?? 'AUTO', 'LOGIN'); ?>>LOGIN</option>
                             <option value="PLAIN" <?php selected($smtp['login_mechanism'] ?? 'AUTO', 'PLAIN'); ?>>PLAIN</option>
                         </select>
@@ -477,46 +479,46 @@ function pcn_options_page() {
 
             </div> <!-- End tab-smtp -->
             <div id="tab-templates" class="pcn-tab-content">
-            <h2>邮件模板</h2>
-            <p>编辑 HTML 模板。系统会尝试将更改写入插件的 `templates/` 目录（需可写）。如果写入失败，模板会保存到数据库选项 `pcn_templates`。</p>
-            <h3>回复通知模板 (reply)</h3>
+            <h2><?php _e('邮件模板', 'wp-comment-notify'); ?></h2>
+            <p><?php _e('编辑 HTML 模板。系统会尝试将更改写入插件的 `templates/` 目录（需可写）。如果写入失败，模板会保存到数据库选项 `pcn_templates`。', 'wp-comment-notify'); ?></p>
+            <h3><?php _e('回复通知模板 (reply)', 'wp-comment-notify'); ?></h3>
             <textarea name="tpl_reply" rows="10" style="width:100%;font-family:monospace;"><?php echo esc_textarea($tpls['reply'] ?? ''); ?></textarea>
 
-            <h3>管理员新评论通知模板 (new_comment)</h3>
+            <h3><?php _e('管理员新评论通知模板 (new_comment)', 'wp-comment-notify'); ?></h3>
             <textarea name="tpl_new_comment" rows="10" style="width:100%;font-family:monospace;"><?php echo esc_textarea($tpls['new_comment'] ?? ''); ?></textarea>
 
-            <h3>待审核通知模板 (pending)</h3>
+            <h3><?php _e('待审核通知模板 (pending)', 'wp-comment-notify'); ?></h3>
             <textarea name="tpl_pending" rows="10" style="width:100%;font-family:monospace;"><?php echo esc_textarea($tpls['pending'] ?? ''); ?></textarea>
             
             </div> <!-- End tab-templates -->
 
             <div class="pcn-submit-bar">
-                <input type="submit" name="pcn_save_settings" id="submit" class="button button-primary button-hero" value="保存所有设置" />
+                <input type="submit" name="pcn_save_settings" id="submit" class="button button-primary button-hero" value="<?php esc_attr_e('保存所有设置', 'wp-comment-notify'); ?>" />
             </div>
         </form>
 
         <div id="tab-test" class="pcn-tab-content">
-        <h2>SMTP 测试</h2>
+        <h2><?php _e('SMTP 测试', 'wp-comment-notify'); ?></h2>
         <form method="post">
             <?php wp_nonce_field('pcn_test_smtp'); ?>
             <table class="form-table">
                 <tr>
-                    <th scope="row">测试收件人邮箱</th>
+                    <th scope="row"><?php _e('测试收件人邮箱', 'wp-comment-notify'); ?></th>
                     <td><input type="email" name="test_to" value="" class="regular-text" placeholder="you@example.com" /></td>
                 </tr>
             </table>
-            <p class="submit"><input type="submit" name="pcn_test_smtp" class="button" value="发送测试邮件" /></p>
+            <p class="submit"><input type="submit" name="pcn_test_smtp" class="button" value="<?php esc_attr_e('发送测试邮件', 'wp-comment-notify'); ?>" /></p>
         </form>
 
         <hr />
-        <h2>最近调试日志</h2>
+        <h2><?php _e('最近调试日志', 'wp-comment-notify'); ?></h2>
         <form method="post">
             <?php wp_nonce_field('pcn_show_logs'); ?>
             <p>
-                显示最近 N 条：
+                <?php _e('显示最近 N 条：', 'wp-comment-notify'); ?>
                 <input type="number" name="pcn_logs_n" value="<?php echo isset($_POST['pcn_logs_n']) ? intval($_POST['pcn_logs_n']) : 50; ?>" class="small-text" />
-                <input type="submit" name="pcn_show_logs" class="button" value="刷新" />
-                <input type="submit" name="pcn_clear_logs" class="button" value="清空日志" />
+                <input type="submit" name="pcn_show_logs" class="button" value="<?php esc_attr_e('刷新', 'wp-comment-notify'); ?>" />
+                <input type="submit" name="pcn_clear_logs" class="button" value="<?php esc_attr_e('清空日志', 'wp-comment-notify'); ?>" />
             </p>
         </form>
         <?php
@@ -533,7 +535,7 @@ function pcn_options_page() {
                 }
                 echo '</pre>';
             } else {
-                echo '<p>暂无调试日志。</p>';
+                echo '<p>' . __('暂无调试日志。', 'wp-comment-notify') . '</p>';
             }
         }
         ?>
@@ -542,6 +544,6 @@ function pcn_options_page() {
     <?php
         if (isset($_POST['pcn_clear_logs']) && check_admin_referer('pcn_show_logs')) {
             delete_option('pcn_debug_log');
-            echo '<div class="updated"><p>已清空调试日志。</p></div>';
+            echo '<div class="updated"><p>' . __('已清空调试日志。', 'wp-comment-notify') . '</p></div>';
         }
     }

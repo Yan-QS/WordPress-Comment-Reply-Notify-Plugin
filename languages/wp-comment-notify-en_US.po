@@ -1,0 +1,227 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: WP Comment & Reply Notify\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2023-10-27 12:00+0000\n"
+"PO-Revision-Date: 2023-10-27 12:00+0000\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: en_US\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 3.0\n"
+"X-Domain: wp-comment-notify\n"
+
+msgid "WP Comment Notify"
+msgstr "WP Comment Notify"
+
+msgid "WP Comment Notify SMTP 测试"
+msgstr "WP Comment Notify SMTP Test"
+
+msgid "这是一封测试邮件，用于验证当前 SMTP/TLS/OAuth 配置是否可用。"
+msgstr "This is a test email to verify if the current SMTP/TLS/OAuth configuration is working."
+
+msgid "测试邮件已发送，请检查收件箱：%s"
+msgstr "Test email sent, please check your inbox: %s"
+
+msgid "PHPMailer 提示信息：%s"
+msgstr "PHPMailer Info: %s"
+
+msgid "PHPMailer 未返回错误信息。如未收到邮件，请查看服务器日志中以 “pcn SMTP debug” 开头的记录。"
+msgstr "PHPMailer returned no error. If you didn't receive the email, check server logs for records starting with 'pcn SMTP debug'."
+
+msgid "测试邮件发送失败。"
+msgstr "Test email failed to send."
+
+msgid "错误信息：%s"
+msgstr "Error Info: %s"
+
+msgid "请检查 SMTP 设置与服务器日志（搜索 “pcn SMTP debug”）。"
+msgstr "Please check SMTP settings and server logs (search for 'pcn SMTP debug')."
+
+msgid "请填写有效的测试收件人邮箱。"
+msgstr "Please enter a valid test recipient email."
+
+msgid "密钥验证请求失败：%s"
+msgstr "License verification request failed: %s"
+
+msgid "密钥验证成功！"
+msgstr "License verification successful!"
+
+msgid "密钥无效或已过期。"
+msgstr "License invalid or expired."
+
+msgid "设置已保存。"
+msgstr "Settings saved."
+
+msgid "试用期已结束，插件功能已禁用。请输入有效密钥以重新激活。"
+msgstr "Trial period ended, plugin disabled. Please enter a valid license key to reactivate."
+
+msgid "WP Comment & Reply Notify 设置"
+msgstr "WP Comment & Reply Notify Settings"
+
+msgid "插件主页"
+msgstr "Plugin Homepage"
+
+msgid "常规设置"
+msgstr "General Settings"
+
+msgid "SMTP 设置"
+msgstr "SMTP Settings"
+
+msgid "邮件模板"
+msgstr "Email Templates"
+
+msgid "测试与日志"
+msgstr "Test & Logs"
+
+msgid "授权与状态"
+msgstr "License & Status"
+
+msgid "授权密钥购买"
+msgstr "Buy License Key"
+
+msgid "授权密钥"
+msgstr "License Key"
+
+msgid "有效"
+msgstr "Valid"
+
+msgid "无效"
+msgstr "Invalid"
+
+msgid "插件状态"
+msgstr "Plugin Status"
+
+msgid "已激活"
+msgstr "Activated"
+
+msgid "试用中，剩余 %d 天"
+msgstr "Trial active, %d days remaining"
+
+msgid "试用结束，已禁用"
+msgstr "Trial ended, disabled"
+
+msgid "插件总开关"
+msgstr "Plugin Master Switch"
+
+msgid "启用插件功能"
+msgstr "Enable Plugin"
+
+msgid "启用后才会在评论提交时发送通知邮件。"
+msgstr "Notifications will only be sent when comments are submitted if enabled."
+
+msgid "强制使用用户名作为发信地址"
+msgstr "Force Username as From Address"
+
+msgid "将 From/Envelope Sender 统一为 SMTP 用户名（某些服务要求二者一致）。"
+msgstr "Unify From/Envelope Sender as SMTP username (required by some services)."
+
+msgid "强制 IPv4 连接"
+msgstr "Force IPv4 Connection"
+
+msgid "使用 IPv4 连接 SMTP（对 IPv6 报错如 502 Invalid input 时有帮助）。"
+msgstr "Use IPv4 to connect to SMTP (helpful for IPv6 errors like 502 Invalid input)."
+
+msgid "启用 SMTP"
+msgstr "Enable SMTP"
+
+msgid "主机"
+msgstr "Host"
+
+msgid "端口"
+msgstr "Port"
+
+msgid "加密"
+msgstr "Encryption"
+
+msgid "无"
+msgstr "None"
+
+msgid "需要身份验证"
+msgstr "SMTP Auth Required"
+
+msgid "认证类型"
+msgstr "Auth Type"
+
+msgid "普通登录 (用户名/密码)"
+msgstr "Normal Login (User/Pass)"
+
+msgid "OAuth2 (若支持)"
+msgstr "OAuth2 (If supported)"
+
+msgid "普通登录下可选择具体登录机制（LOGIN/PLAIN）。"
+msgstr "Select specific login mechanism (LOGIN/PLAIN) for normal login."
+
+msgid "用户名"
+msgstr "Username"
+
+msgid "密码"
+msgstr "Password"
+
+msgid "发信邮箱 (From)"
+msgstr "From Email"
+
+msgid "用于邮件的发件人地址（可与 SMTP 用户名不同）。"
+msgstr "Sender address for emails (can be different from SMTP username)."
+
+msgid "发信名称 (From Name)"
+msgstr "From Name"
+
+msgid "用于显示在收件人处的发件人名称，留空则使用站点名称。"
+msgstr "Sender name displayed to recipients, leave empty to use site name."
+
+msgid "登录机制"
+msgstr "Login Mechanism"
+
+msgid "自动协商"
+msgstr "Auto Negotiate"
+
+msgid "编辑 HTML 模板。系统会尝试将更改写入插件的 `templates/` 目录（需可写）。如果写入失败，模板会保存到数据库选项 `pcn_templates`。"
+msgstr "Edit HTML templates. System will try to write changes to `templates/` directory (must be writable). If failed, templates will be saved to database option `pcn_templates`."
+
+msgid "回复通知模板 (reply)"
+msgstr "Reply Notification Template (reply)"
+
+msgid "管理员新评论通知模板 (new_comment)"
+msgstr "Admin New Comment Template (new_comment)"
+
+msgid "待审核通知模板 (pending)"
+msgstr "Pending Notification Template (pending)"
+
+msgid "保存所有设置"
+msgstr "Save All Settings"
+
+msgid "测试收件人邮箱"
+msgstr "Test Recipient Email"
+
+msgid "发送测试邮件"
+msgstr "Send Test Email"
+
+msgid "最近调试日志"
+msgstr "Recent Debug Logs"
+
+msgid "显示最近 N 条："
+msgstr "Show last N lines:"
+
+msgid "刷新"
+msgstr "Refresh"
+
+msgid "清空日志"
+msgstr "Clear Logs"
+
+msgid "暂无调试日志。"
+msgstr "No debug logs."
+
+msgid "已清空调试日志。"
+msgstr "Debug logs cleared."
+
+msgid "您在 [%s] 的留言有了新回复！"
+msgstr "New reply to your comment on [%s]!"
+
+msgid "在「%s」的文章《%s》有新的评论"
+msgstr "New comment on article \"%2$s\" at \"%1$s\""
+
+msgid "在「%s」的文章《%s》中有新的评论需要审核"
+msgstr "New comment awaiting moderation on article \"%2$s\" at \"%1$s\""

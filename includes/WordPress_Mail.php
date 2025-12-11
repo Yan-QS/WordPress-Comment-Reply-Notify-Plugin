@@ -55,7 +55,7 @@ function pk_comment_mail_notify($comment_id) {
                 $safe_reply_author = esc_html(trim($comment->comment_author));
                 $safe_reply_content = wp_kses_post($comment->comment_content);
 
-                $subject = sprintf('您在 [%s] 的留言有了新回复！', $blogname);
+                $subject = sprintf(__('您在 [%s] 的留言有了新回复！', 'wp-comment-notify'), $blogname);
                 $message = pcn_get_template('reply', array(
                     'blogname' => $blogname,
                     'parent_author' => $safe_parent_author,
@@ -83,9 +83,8 @@ function pk_comment_mail_notify($comment_id) {
 
         $safe_author = esc_html($comment->comment_author);
         $safe_content = wp_kses_post($comment->comment_content);
-        $subject = sprintf('在「%s」的文章《%s》有新的评论', $blogname, get_the_title($comment->comment_post_ID));
+        $subject = sprintf(__('在「%s」的文章《%s》有新的评论', 'wp-comment-notify'), $blogname, get_the_title($comment->comment_post_ID));
 
-        $subject = sprintf('在「%s」的文章《%s》有新的评论', $blogname, get_the_title($comment->comment_post_ID));
         $message = pcn_get_template('new_comment', array(
             'author' => $safe_author,
             'content' => $safe_content,
@@ -109,9 +108,8 @@ function pk_comment_mail_notify($comment_id) {
 
         $safe_author = esc_html($comment->comment_author);
         $safe_content = wp_kses_post($comment->comment_content);
-        $subject = sprintf('在「%s」的文章《%s》中有新的评论需要审核', $blogname, get_the_title($comment->comment_post_ID));
+        $subject = sprintf(__('在「%s」的文章《%s》中有新的评论需要审核', 'wp-comment-notify'), $blogname, get_the_title($comment->comment_post_ID));
 
-        $subject = sprintf('在「%s」的文章《%s》中有新的评论需要审核', $blogname, get_the_title($comment->comment_post_ID));
         $message = pcn_get_template('pending', array(
             'author' => $safe_author,
             'content' => $safe_content,

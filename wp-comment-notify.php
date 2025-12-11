@@ -8,6 +8,8 @@
  * Author URI:  https://yanqs.me/
  * License:     GPL2
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
+ * Text Domain: wp-comment-notify
+ * Domain Path: /languages
  */
 
 // 安全检查，防止直接访问
@@ -44,6 +46,7 @@ register_deactivation_hook(__FILE__, 'pcn_deactivate');
 
 // 插件就绪
 add_action('plugins_loaded', function() {
+    load_plugin_textdomain('wp-comment-notify', false, dirname(plugin_basename(__FILE__)) . '/languages');
     // 已由 includes 中的 add_action 注册主逻辑
 });
 
