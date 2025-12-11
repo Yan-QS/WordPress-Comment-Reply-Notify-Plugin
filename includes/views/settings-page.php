@@ -296,7 +296,7 @@
                         $.post(ajaxurl, { action: 'pcn_process_queue', nonce: nonce }, function(res){
                             if (res.success) {
                                 renderActions(res.data.recent_actions);
-                                alert('<?php esc_js_e('队列已处理，已更新记录。', 'wp-comment-notify'); ?>');
+                                alert('<?php echo esc_js( __( '队列已处理，已更新记录。', 'wp-comment-notify' ) ); ?>');
                             } else {
                                 alert('Error');
                             }
@@ -309,7 +309,7 @@
                         $.post(ajaxurl, { action: 'pcn_clear_queue', nonce: nonce }, function(res){
                             if (res.success) {
                                 renderActions([]);
-                                alert('<?php esc_js_e('邮件队列已清空。', 'wp-comment-notify'); ?>');
+                                alert('<?php echo esc_js( __( '邮件队列已清空。', 'wp-comment-notify' ) ); ?>');
                             } else {
                                 alert('Error');
                             }
