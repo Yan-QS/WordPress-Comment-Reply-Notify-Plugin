@@ -228,3 +228,9 @@ msgstr "New comment awaiting moderation on article \"%2$s\" at \"%1$s\""
 
 msgid "注意：OAuth2 认证仅在部分 SMTP 服务（如 Gmail/Google Workspace）支持，且需要预先在对应平台创建应用并获取相关凭据。SMTP 调试成功后请务必删除主题目录下的 smtp_test.php 文件。"
 msgstr "Note: OAuth2 authentication is only supported by some SMTP services (such as Gmail/Google Workspace) and requires creating an app and obtaining credentials on the corresponding platform in advance. Please be sure to delete the smtp_test.php file in the plugin directory after successful SMTP debugging."
+
+msgid "可用变量：{{blogname}}, {{parent_author}}, {{parent_content}}, {{reply_author}}, {{reply_content}}, {{comment_link}}"
+msgstr "Available variables: {{blogname}}, {{parent_author}}, {{parent_content}}, {{reply_author}}, {{reply_content}}, {{comment_link}}"
+
+msgid "可用变量：{{author}}, {{content}}, {{post_title}}, {{comment_id}}, {{comments_waiting}}, {{approve_url}}, {{trash_url}}, {{spam_url}}"
+msgstr "Available variables: {{author}}, {{content}}, {{post_title}}, {{comment_id}}, {{comments_waiting}}, {{approve_url}}, {{trash_url}}, {{spam_url}}"

@@ -23,11 +23,16 @@ if (! defined('PCN_PLUGIN_DIR')) {
 }
 
 // 包含实现文件（已包含改良版实现）
-require_once PCN_PLUGIN_DIR . 'includes/WordPress_Mail.php';
+require_once PCN_PLUGIN_DIR . 'includes/class-pcn-unsubscribe.php';
+PCN_Unsubscribe::init();
+
+require_once PCN_PLUGIN_DIR . 'includes/class-pcn-mailer.php';
+PCN_Mailer::init();
 
 // 后台管理页面（仅在 admin 请求时加载）
 if (is_admin()) {
-    require_once PCN_PLUGIN_DIR . 'includes/admin.php';
+    require_once PCN_PLUGIN_DIR . 'includes/class-pcn-settings.php';
+    PCN_Settings::init();
 }
 
 // 激活/卸载钩子
