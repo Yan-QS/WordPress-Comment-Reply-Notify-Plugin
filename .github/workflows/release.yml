@@ -22,11 +22,11 @@ jobs:
           mkdir -p release
           # Prepare list of tracked files, excluding tests and development files
           git ls-files > all_files.txt
-          grep -Ev '^(tests/|composer.json$|phpunit.xml$|README.md$|README.en_US.md$|smtp_test.php$|.github/)' all_files.txt > files_to_zip.txt
+          grep -Ev '^(composer.json$|phpunit.xml$|README.md$|README.en_US.md$|smtp_test.php$|.github/)' all_files.txt > files_to_zip.txt
           # Create zip from filtered file list
           if [ -s files_to_zip.txt ]; then
             zip -r "release/${ZIPNAME}" -@ < files_to_zip.txt
-            echo "Created release/${ZIPNAME} (excluded tests, composer.json, phpunit.xml, README*, smtp_test.php, .github/)"
+            echo "Created release/${ZIPNAME} (excluded composer.json, phpunit.xml, README*, smtp_test.php, .github/)"
           else
             echo "No files to package" && exit 1
           fi
