@@ -234,3 +234,40 @@ msgstr "Available variables: {{blogname}}, {{parent_author}}, {{parent_content}}
 
 msgid "可用变量：{{author}}, {{content}}, {{post_title}}, {{comment_id}}, {{comments_waiting}}, {{approve_url}}, {{trash_url}}, {{spam_url}}"
 msgstr "Available variables: {{author}}, {{content}}, {{post_title}}, {{comment_id}}, {{comments_waiting}}, {{approve_url}}, {{trash_url}}, {{spam_url}}"
+
+msgid "发送记录"
+msgstr "Email Send Log"
+
+msgid "邮件发送记录"
+msgstr "Email Sending Records"
+
+msgid "已清空邮件发送日志。"
+msgstr "Email send logs cleared."
+
+msgid "暂无记录。"
+msgstr "No records."
+
+msgid "时间"
+msgstr "Time"
+
+msgid "收件人"
+msgstr "Recipient"
+
+msgid "主题"
+msgstr "Subject"
+
+msgid "状态"
+msgstr "Status"
+
+msgid "错误信息"
+msgstr "Error Info"
+
+msgid "成功"
+msgstr "Success"
+
+msgid "失败"
+msgstr "Failure"
+
+msgid "清空调试日志"
+msgstr "Clear Debug Logs"
+
