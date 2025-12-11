@@ -49,9 +49,10 @@ Get License: [https://yanqs.me/wp-comment-notify-plugin/](https://yanqs.me/wp-co
 
 ## Installation & Activation
 
-1.  Upload the entire `wp-comment-notify` folder to the `/wp-content/plugins/` directory of your WordPress site.
-2.  Log in to the WordPress admin panel and go to the "Plugins" page.
-3.  Find "WP Comment Notify (Simple)" and click "Activate".
+1.  Download the latest release from Releases: https://github.com/YanQS-Blog/WordPress-Comment-Reply-Notify-Plugin/releases
+2.  Upload the extracted `wp-comment-notify` folder to the `/wp-content/plugins/` directory of your WordPress site.
+3.  Log in to the WordPress admin panel and go to the "Plugins" page.
+4.  Find "WP Comment & Reply Notify" and click "Activate".
 
 ## Configuration Guide
 
