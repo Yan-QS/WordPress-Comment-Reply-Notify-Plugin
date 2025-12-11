@@ -66,7 +66,7 @@ msgstr "Email Templates"
 msgid "测试与日志"
 msgstr "Test & Logs"
 
-/* License and trial-related strings removed because licensing is no longer required. */
+# License and trial-related strings removed because licensing is no longer required.
 
 msgid "插件总开关"
 msgstr "Plugin Master Switch"
