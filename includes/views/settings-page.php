@@ -146,7 +146,10 @@
             </tr>
             <tr class="pcn-auth-login">
                 <th scope="row"><?php _e('密码', 'wp-comment-notify'); ?></th>
-                <td><input type="password" name="password" value="<?php echo esc_attr($smtp['password'] ?? ''); ?>" class="regular-text" /></td>
+                <td>
+                    <input type="password" name="password" value="" class="regular-text" />
+                    <p class="description"><?php _e('为安全起见，此处不回显保存的密码。若需通过环境变量提供，请在 wp-config.php 中定义 `PCN_SMTP_PASSWORD`。', 'wp-comment-notify'); ?></p>
+                </td>
             </tr>
             <tr>
                 <th scope="row"><?php _e('发信邮箱 (From)', 'wp-comment-notify'); ?></th>
@@ -176,11 +179,17 @@
             </tr>
             <tr class="pcn-auth-oauth2">
                 <th scope="row">OAuth2 client_secret</th>
-                <td><input type="text" name="client_secret" value="<?php echo esc_attr($smtp['client_secret'] ?? ''); ?>" class="regular-text" /></td>
+                <td>
+                    <input type="text" name="client_secret" value="" class="regular-text" />
+                    <p class="description"><?php _e('客户端密钥不会明文回显。可在 wp-config.php 中定义 `PCN_SMTP_CLIENT_SECRET`，或在此处填写并保存（会以加密形式存储）。', 'wp-comment-notify'); ?></p>
+                </td>
             </tr>
             <tr class="pcn-auth-oauth2">
                 <th scope="row">OAuth2 refresh_token</th>
-                <td><input type="text" name="refresh_token" value="<?php echo esc_attr($smtp['refresh_token'] ?? ''); ?>" class="regular-text" /></td>
+                <td>
+                    <input type="text" name="refresh_token" value="" class="regular-text" />
+                    <p class="description"><?php _e('出于安全考虑，刷新令牌不会明文回显。可在 wp-config.php 中定义 `PCN_SMTP_REFRESH_TOKEN`，或在此处填写并保存（会以加密形式存储）。', 'wp-comment-notify'); ?></p>
+                </td>
             </tr>
             <p><?php _e('注意：OAuth2 认证仅在部分 SMTP 服务（如 Gmail/Google Workspace）支持，且需要预先在对应平台创建应用并获取相关凭据。SMTP 调试成功后请务必删除主题目录下的 smtp_test.php 文件。', 'wp-comment-notify'); ?></p>
         </table>
