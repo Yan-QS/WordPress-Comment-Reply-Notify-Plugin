@@ -72,7 +72,8 @@
         <a href="#" class="pcn-nav-tab active" data-target="tab-general"><?php _e('常规设置', 'wp-comment-notify'); ?></a>
         <a href="#" class="pcn-nav-tab" data-target="tab-smtp"><?php _e('SMTP 设置', 'wp-comment-notify'); ?></a>
         <a href="#" class="pcn-nav-tab" data-target="tab-templates"><?php _e('邮件模板', 'wp-comment-notify'); ?></a>
-        <a href="#" class="pcn-nav-tab" data-target="tab-test"><?php _e('测试与日志', 'wp-comment-notify'); ?></a>
+        <a href="#" class="pcn-nav-tab" data-target="tab-test"><?php _e('SMTP 测试', 'wp-comment-notify'); ?></a>
+        <a href="#" class="pcn-nav-tab" data-target="tab-logs"><?php _e('发送记录', 'wp-comment-notify'); ?></a>
     </div>
 
     <form method="post">
@@ -243,41 +244,75 @@
     </form>
 
     <div id="tab-test" class="pcn-tab-content">
-    <h2><?php _e('SMTP 测试', 'wp-comment-notify'); ?></h2>
-    <form method="post">
-        <?php wp_nonce_field('pcn_test_smtp'); ?>
-        <table class="form-table">
-            <tr>
-                <th scope="row"><?php _e('测试收件人邮箱', 'wp-comment-notify'); ?></th>
-                <td><input type="email" name="test_to" value="" class="regular-text" placeholder="you@example.com" /></td>
-            </tr>
-        </table>
-        <p class="submit"><input type="submit" name="pcn_test_smtp" class="button" value="<?php esc_attr_e('发送测试邮件', 'wp-comment-notify'); ?>" /></p>
-    </form>
+        <h2><?php _e('SMTP 测试', 'wp-comment-notify'); ?></h2>
+        <form method="post">
+            <?php wp_nonce_field('pcn_test_smtp'); ?>
+            <table class="form-table">
+                <tr>
+                    <th scope="row"><?php _e('测试收件人邮箱', 'wp-comment-notify'); ?></th>
+                    <td><input type="email" name="test_to" value="" class="regular-text" placeholder="you@example.com" /></td>
+                </tr>
+            </table>
+            <p class="submit">
+                <input type="submit" name="pcn_test_smtp" class="button" value="<?php esc_attr_e('发送测试邮件', 'wp-comment-notify'); ?>" />
+                <input type="submit" name="pcn_clear_debug_logs" class="button" value="<?php esc_attr_e('清空调试日志', 'wp-comment-notify'); ?>" />
+            </p>
+        </form>
 
-    <hr />
-    <h2><?php _e('最近调试日志', 'wp-comment-notify'); ?></h2>
-    <form method="post">
-        <?php wp_nonce_field('pcn_show_logs'); ?>
-        <p>
-            <?php _e('显示最近 N 条：', 'wp-comment-notify'); ?>
-            <input type="number" name="pcn_logs_n" value="<?php echo isset($_POST['pcn_logs_n']) ? intval($_POST['pcn_logs_n']) : 50; ?>" class="small-text" />
-            <input type="submit" name="pcn_show_logs" class="button" value="<?php esc_attr_e('刷新', 'wp-comment-notify'); ?>" />
-            <input type="submit" name="pcn_clear_logs" class="button" value="<?php esc_attr_e('清空日志', 'wp-comment-notify'); ?>" />
-        </p>
-    </form>
-    <?php
-    if ($logs_to_show !== null) {
-        if (! empty($logs_to_show)) {
-            echo '<pre style="max-height:300px;overflow:auto;background:#f7f7f7;padding:10px;border:1px solid #ddd;">';
-            foreach ($logs_to_show as $line) {
-                echo esc_html($line) . "\n";
-            }
-            echo '</pre>';
-        } else {
-            echo '<p>' . __('暂无调试日志。', 'wp-comment-notify') . '</p>';
-        }
-    }
-    ?>
+        <?php if (! empty($debug_logs)): ?>
+            <h3><?php _e('SMTP 调试日志', 'wp-comment-notify'); ?></h3>
+            <pre style="max-height:300px;overflow:auto;background:#f7f7f7;padding:10px;border:1px solid #ddd;"><?php
+                foreach ($debug_logs as $line) {
+                    echo esc_html($line) . "\n";
+                }
+            ?></pre>
+        <?php endif; ?>
     </div> <!-- End tab-test -->
+
+    <div id="tab-logs" class="pcn-tab-content">
+        <h2><?php _e('邮件发送记录', 'wp-comment-notify'); ?></h2>
+        <form method="post">
+            <?php wp_nonce_field('pcn_show_logs'); ?>
+            <p>
+                <?php _e('显示最近 N 条：', 'wp-comment-notify'); ?>
+                <input type="number" name="pcn_logs_n" value="<?php echo isset($_POST['pcn_logs_n']) ? intval($_POST['pcn_logs_n']) : 50; ?>" class="small-text" />
+                <input type="submit" name="pcn_show_logs" class="button" value="<?php esc_attr_e('刷新', 'wp-comment-notify'); ?>" />
+                <input type="submit" name="pcn_clear_logs" class="button" value="<?php esc_attr_e('清空日志', 'wp-comment-notify'); ?>" />
+            </p>
+        </form>
+        <table class="widefat fixed striped">
+            <thead>
+                <tr>
+                    <th style="width: 160px;"><?php _e('时间', 'wp-comment-notify'); ?></th>
+                    <th><?php _e('收件人', 'wp-comment-notify'); ?></th>
+                    <th><?php _e('主题', 'wp-comment-notify'); ?></th>
+                    <th style="width: 80px;"><?php _e('状态', 'wp-comment-notify'); ?></th>
+                    <th><?php _e('错误信息', 'wp-comment-notify'); ?></th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php if ($logs_to_show && !empty($logs_to_show)): ?>
+                    <?php foreach ($logs_to_show as $log): ?>
+                        <tr>
+                            <td><?php echo esc_html($log['time']); ?></td>
+                            <td><?php echo esc_html($log['to']); ?></td>
+                            <td><?php echo esc_html($log['subject']); ?></td>
+                            <td>
+                                <?php if ($log['status'] === 'success'): ?>
+                                    <span style="color: green;"><?php _e('成功', 'wp-comment-notify'); ?></span>
+                                <?php else: ?>
+                                    <span style="color: red;"><?php _e('失败', 'wp-comment-notify'); ?></span>
+                                <?php endif; ?>
+                            </td>
+                            <td><?php echo esc_html($log['error']); ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <tr>
+                        <td colspan="5"><?php _e('暂无记录。', 'wp-comment-notify'); ?></td>
+                    </tr>
+                <?php endif; ?>
+            </tbody>
+        </table>
+    </div> <!-- End tab-logs -->
 </div> <!-- End wrap -->

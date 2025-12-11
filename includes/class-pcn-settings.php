@@ -54,18 +54,17 @@ class PCN_Settings {
             $tpls = $file_templates;
         }
 
-        // Prepare logs if requested
-        $logs_to_show = null;
-        if (isset($_POST['pcn_show_logs']) && check_admin_referer('pcn_show_logs')) {
-            $n = isset($_POST['pcn_logs_n']) ? intval($_POST['pcn_logs_n']) : 50;
-            $n = max(1, min(500, $n));
-            $logs = get_option('pcn_debug_log', array());
-            if (! empty($logs)) {
-                $logs_to_show = array_slice($logs, -$n);
-            } else {
-                $logs_to_show = array(); // Empty array means no logs found
-            }
+        // Prepare logs
+        $n = isset($_POST['pcn_logs_n']) ? intval($_POST['pcn_logs_n']) : 50;
+        $n = max(1, min(500, $n));
+        $logs = get_option('pcn_email_logs', array());
+        if (! empty($logs)) {
+            $logs_to_show = array_slice($logs, 0, $n);
+        } else {
+            $logs_to_show = array();
         }
+
+        $debug_logs = get_option('pcn_debug_log', array());
 
         // Include view
         include PCN_PLUGIN_DIR . 'includes/views/settings-page.php';
@@ -81,8 +80,13 @@ class PCN_Settings {
         }
         
         if (isset($_POST['pcn_clear_logs']) && check_admin_referer('pcn_show_logs')) {
+            delete_option('pcn_email_logs');
+            echo '<div class="updated"><p>' . __('已清空邮件发送日志。', 'wp-comment-notify') . '</p></div>';
+        }
+
+        if (isset($_POST['pcn_clear_debug_logs']) && check_admin_referer('pcn_test_smtp')) {
             delete_option('pcn_debug_log');
-            echo '<div class="updated"><p>' . __('已清空调试日志。', 'wp-comment-notify') . '</p></div>';
+            echo '<div class="updated"><p>' . __('已清空 SMTP 调试日志。', 'wp-comment-notify') . '</p></div>';
         }
     }
 

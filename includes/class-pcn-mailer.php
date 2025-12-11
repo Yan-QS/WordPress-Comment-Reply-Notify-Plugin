@@ -5,9 +5,38 @@ if (! defined('ABSPATH')) {
 
 class PCN_Mailer {
 
+    private static $last_mail_error = '';
+
     public static function init() {
         add_action('comment_post', array(__CLASS__, 'handle_comment_post'));
         add_action('phpmailer_init', array(__CLASS__, 'init_phpmailer'), PHP_INT_MAX);
+        add_action('wp_mail_failed', array(__CLASS__, 'capture_mail_error'));
+    }
+
+    public static function capture_mail_error($error) {
+        if (is_wp_error($error)) {
+            self::$last_mail_error = $error->get_error_message();
+        }
+    }
+
+    public static function log_email_attempt($to, $subject, $sent, $error = '') {
+        $logs = get_option('pcn_email_logs', array());
+        if (!is_array($logs)) $logs = array();
+        
+        $log_entry = array(
+            'time' => current_time('mysql'),
+            'to' => $to,
+            'subject' => $subject,
+            'status' => $sent ? 'success' : 'failure',
+            'error' => $error
+        );
+        
+        array_unshift($logs, $log_entry);
+        if (count($logs) > 100) {
+            $logs = array_slice($logs, 0, 100);
+        }
+        
+        update_option('pcn_email_logs', $logs, false);
     }
 
     public static function set_html_content_type() {
@@ -65,7 +94,9 @@ class PCN_Mailer {
                     ));
 
                     add_filter('wp_mail_content_type', array(__CLASS__, 'set_html_content_type'));
+                    self::$last_mail_error = '';
                     $sent = wp_mail($to, $subject, $message, $headers);
+                    self::log_email_attempt($to, $subject, $sent, $sent ? '' : self::$last_mail_error);
                     remove_filter('wp_mail_content_type', array(__CLASS__, 'set_html_content_type'));
                     if (! $sent) {
                         error_log('pcn: 回复通知邮件发送失败，comment_id=' . $comment_id);
@@ -98,7 +129,9 @@ class PCN_Mailer {
                 'spam_url' => $spam_url,
             ));
             add_filter('wp_mail_content_type', array(__CLASS__, 'set_html_content_type'));
+            self::$last_mail_error = '';
             $sent = wp_mail($to, $subject, $message, $headers);
+            self::log_email_attempt($to, $subject, $sent, $sent ? '' : self::$last_mail_error);
             remove_filter('wp_mail_content_type', array(__CLASS__, 'set_html_content_type'));
             if (! $sent) {
                 error_log('pcn: 管理员新评论通知邮件发送失败，comment_id=' . $comment_id);
@@ -130,7 +163,9 @@ class PCN_Mailer {
             ));
 
             add_filter('wp_mail_content_type', array(__CLASS__, 'set_html_content_type'));
+            self::$last_mail_error = '';
             $sent = wp_mail($to, $subject, $message, $headers);
+            self::log_email_attempt($to, $subject, $sent, $sent ? '' : self::$last_mail_error);
             remove_filter('wp_mail_content_type', array(__CLASS__, 'set_html_content_type'));
             if (! $sent) {
                 error_log('pcn: 审核通知邮件发送失败，comment_id=' . $comment_id);
