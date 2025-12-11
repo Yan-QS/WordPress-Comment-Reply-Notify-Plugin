@@ -59,7 +59,8 @@ class PCN_Settings {
         $debug_logs = get_option('pcn_debug_log', array());
 
         // Enqueue editor scripts so we can initialize TinyMCE on-demand in the view
-        if (is_admin()) {
+        // Only call if the function exists (older WP versions may not have it).
+        if (is_admin() && function_exists('wp_enqueue_editor')) {
             wp_enqueue_editor();
         }
 

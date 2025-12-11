@@ -222,6 +222,10 @@
                 </td>
             </tr>
             <p><?php _e('注意：OAuth2 认证仅在部分 SMTP 服务（如 Gmail/Google Workspace）支持，且需要预先在对应平台创建应用并获取相关凭据。SMTP 调试成功后请务必删除主题目录下的 smtp_test.php 文件。', 'wp-comment-notify'); ?></p>
+            <p style="margin-top:15px;">
+                <button type="submit" name="pcn_clear_credentials" class="button" onclick="return confirm('<?php echo esc_js( __( '确定要清除所有已保存的敏感凭据吗？推荐通过环境变量提供凭据。', 'wp-comment-notify' ) ); ?>');"><?php esc_html_e('清除凭据', 'wp-comment-notify'); ?></button>
+                <?php wp_nonce_field('pcn_clear_credentials'); ?>
+            </p>
         </table>
 
         </div> <!-- End tab-smtp -->
@@ -244,9 +248,6 @@
 
         <div class="pcn-submit-bar">
             <input type="submit" name="pcn_save_settings" id="submit" class="button button-primary button-hero" value="<?php esc_attr_e('保存所有设置', 'wp-comment-notify'); ?>" />
-            &nbsp;
-            <button type="submit" name="pcn_clear_credentials" class="button" onclick="return confirm('<?php esc_js_e('确定要清除所有已保存的敏感凭据吗？推荐通过环境变量提供凭据。', 'wp-comment-notify'); ?>');"><?php esc_html_e('清除凭据', 'wp-comment-notify'); ?></button>
-            <?php wp_nonce_field('pcn_clear_credentials'); ?>
         </div>
     </form>
 
