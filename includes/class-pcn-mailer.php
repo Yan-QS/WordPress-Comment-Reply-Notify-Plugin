@@ -250,7 +250,16 @@ class PCN_Mailer {
         $phpmailer->SMTPAuth = ! empty($settings['smtp_auth']);
         if ($phpmailer->SMTPAuth && (! empty($settings['username']) || ! empty($settings['password']))) {
             $phpmailer->Username = $settings['username'];
-            $phpmailer->Password = $settings['password'];
+            // Prefer environment constant if set; otherwise decrypt stored value
+            if (defined('PCN_SMTP_PASSWORD') && PCN_SMTP_PASSWORD !== '') {
+                $phpmailer->Password = PCN_SMTP_PASSWORD;
+            } else {
+                if (! empty($settings['password']) && method_exists('PCN_Settings', 'decrypt_value')) {
+                    $phpmailer->Password = PCN_Settings::decrypt_value($settings['password']);
+                } else {
+                    $phpmailer->Password = '';
+                }
+            }
             // 若选择普通登录，按登录机制设置；AUTO 则让 PHPMailer 自行协商
             if (empty($settings['auth_type']) || $settings['auth_type'] === 'login') {
                 $mechanism = ! empty($settings['login_mechanism']) ? strtoupper($settings['login_mechanism']) : 'AUTO';
@@ -329,18 +338,35 @@ class PCN_Mailer {
         // 如果选择 OAuth2，且库可用，则尝试设置 XOAUTH2
         if (! empty($settings['auth_type']) && $settings['auth_type'] === 'oauth2') {
             if (class_exists('\PHPMailer\\PHPMailer\\OAuth') && class_exists('\League\\OAuth2\\Client\\Provider\\Google')) {
-                try {
+                    try {
+                    $clientSecret = '';
+                    if (defined('PCN_SMTP_CLIENT_SECRET') && PCN_SMTP_CLIENT_SECRET !== '') {
+                        $clientSecret = PCN_SMTP_CLIENT_SECRET;
+                    } else {
+                        if (! empty($settings['client_secret']) && method_exists('PCN_Settings', 'decrypt_value')) {
+                            $clientSecret = PCN_Settings::decrypt_value($settings['client_secret']);
+                        }
+                    }
                     $provider = new \League\OAuth2\Client\Provider\Google([
                         'clientId' => $settings['client_id'],
-                        'clientSecret' => $settings['client_secret'],
+                        'clientSecret' => $clientSecret,
                     ]);
 
                     $phpmailer->AuthType = 'XOAUTH2';
+                    // Prefer environment constant for refresh token; otherwise decrypt stored value
+                    $refreshToken = '';
+                    if (defined('PCN_SMTP_REFRESH_TOKEN') && PCN_SMTP_REFRESH_TOKEN !== '') {
+                        $refreshToken = PCN_SMTP_REFRESH_TOKEN;
+                    } else {
+                        if (! empty($settings['refresh_token']) && method_exists('PCN_Settings', 'decrypt_value')) {
+                            $refreshToken = PCN_Settings::decrypt_value($settings['refresh_token']);
+                        }
+                    }
                     $phpmailer->setOAuth(new \PHPMailer\PHPMailer\OAuth([
                         'provider' => $provider,
                         'clientId' => $settings['client_id'],
-                        'clientSecret' => $settings['client_secret'],
-                        'refreshToken' => $settings['refresh_token'],
+                        'clientSecret' => $clientSecret,
+                        'refreshToken' => $refreshToken,
                         'userName' => $phpmailer->From,
                     ]));
                 } catch (Exception $e) {

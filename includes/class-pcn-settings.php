@@ -63,6 +63,9 @@ class PCN_Settings {
     }
 
     private static function handle_actions() {
+        if (! current_user_can('manage_options')) {
+            return;
+        }
         if (isset($_POST['pcn_test_smtp']) && check_admin_referer('pcn_test_smtp')) {
             self::handle_smtp_test();
         }
@@ -162,7 +165,19 @@ class PCN_Settings {
         $smtp['encryption'] = sanitize_text_field($_POST['encryption']);
         $smtp['smtp_auth'] = ! empty($_POST['smtp_auth']) ? 1 : 0;
         $smtp['username'] = sanitize_text_field($_POST['username']);
-        $smtp['password'] = sanitize_text_field($_POST['password']);
+        // Handle password: if user provided a non-empty value, encrypt and store it.
+        $existing = get_option('pcn_smtp_settings', array());
+        $posted_pass = isset($_POST['password']) ? trim($_POST['password']) : '';
+        if ($posted_pass !== '') {
+            $smtp['password'] = self::encrypt_value($posted_pass);
+        } else {
+            // keep existing encrypted value if present
+            if (! empty($existing['password'])) {
+                $smtp['password'] = $existing['password'];
+            } else {
+                $smtp['password'] = '';
+            }
+        }
         $smtp['from_email'] = sanitize_email($_POST['from_email'] ?? '');
         $smtp['from_name'] = sanitize_text_field($_POST['from_name'] ?? '');
         $smtp['auth_type'] = sanitize_text_field($_POST['auth_type']);
@@ -171,8 +186,26 @@ class PCN_Settings {
         $smtp['force_ipv4'] = ! empty($_POST['force_ipv4']) ? 1 : 0;
 
         $smtp['client_id'] = sanitize_text_field($_POST['client_id']);
-        $smtp['client_secret'] = sanitize_text_field($_POST['client_secret']);
-        $smtp['refresh_token'] = sanitize_text_field($_POST['refresh_token']);
+        $posted_cs = isset($_POST['client_secret']) ? trim($_POST['client_secret']) : '';
+        if ($posted_cs !== '') {
+            $smtp['client_secret'] = self::encrypt_value($posted_cs);
+        } else {
+            if (! empty($existing['client_secret'])) {
+                $smtp['client_secret'] = $existing['client_secret'];
+            } else {
+                $smtp['client_secret'] = '';
+            }
+        }
+        $posted_rt = isset($_POST['refresh_token']) ? trim($_POST['refresh_token']) : '';
+        if ($posted_rt !== '') {
+            $smtp['refresh_token'] = self::encrypt_value($posted_rt);
+        } else {
+            if (! empty($existing['refresh_token'])) {
+                $smtp['refresh_token'] = $existing['refresh_token'];
+            } else {
+                $smtp['refresh_token'] = '';
+            }
+        }
         update_option('pcn_smtp_settings', $smtp);
 
         // 模板编辑
@@ -229,6 +262,55 @@ class PCN_Settings {
             $logs = array_slice($logs, -$max);
         }
         update_option('pcn_debug_log', $logs, false);
+    }
+
+    // Encrypt a sensitive value using OpenSSL with a key derived from wp_salt().
+    // Returns base64-encoded string containing IV and ciphertext, or empty string on failure.
+    public static function encrypt_value($plain) {
+        if (! is_string($plain) || $plain === '') {
+            return '';
+        }
+        if (! function_exists('openssl_encrypt')) {
+            // Fallback: avoid storing plaintext; return base64 of value (not ideal).
+            return base64_encode($plain);
+        }
+        $key = hash('sha256', wp_salt('pcn_secret_key'));
+        $ivlen = openssl_cipher_iv_length('AES-256-CBC');
+        $iv = openssl_random_pseudo_bytes($ivlen);
+        $cipher = openssl_encrypt($plain, 'AES-256-CBC', $key, OPENSSL_RAW_DATA, $iv);
+        if ($cipher === false) {
+            return '';
+        }
+        return base64_encode($iv . $cipher);
+    }
+
+    // Decrypt a value previously encrypted with encrypt_value().
+    // If input looks like base64 non-encrypted fallback, attempt decode.
+    public static function decrypt_value($data) {
+        if (! is_string($data) || $data === '') {
+            return '';
+        }
+        if (! function_exists('openssl_decrypt')) {
+            // Fallback: assume base64-encoded plaintext
+            $decoded = @base64_decode($data, true);
+            return $decoded === false ? '' : $decoded;
+        }
+        $raw = base64_decode($data, true);
+        if ($raw === false) {
+            return '';
+        }
+        $key = hash('sha256', wp_salt('pcn_secret_key'));
+        $ivlen = openssl_cipher_iv_length('AES-256-CBC');
+        if (strlen($raw) <= $ivlen) {
+            return '';
+        }
+        $iv = substr($raw, 0, $ivlen);
+        $cipher = substr($raw, $ivlen);
+        $plain = openssl_decrypt($cipher, 'AES-256-CBC', $key, OPENSSL_RAW_DATA, $iv);
+        if ($plain === false) {
+            return '';
+        }
+        return $plain;
     }
 
     public static function admin_html_content_type() {
