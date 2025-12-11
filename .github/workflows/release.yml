@@ -5,6 +5,9 @@ on:
     tags:
       - 'v*'
 
+permissions:
+  contents: write
+
 jobs:
   package_and_release:
     runs-on: ubuntu-latest
@@ -25,6 +28,10 @@ jobs:
         id: create_release
         uses: ncipollo/release-action@v1
         with:
+          # Prefer a personal access token stored in repository secret `RELEASE_TOKEN`.
+          # If not provided, the action will fall back to the default GITHUB token,
+          # but some repos/org settings may prevent GITHUB_TOKEN from creating releases.
+          token: ${{ secrets.RELEASE_TOKEN }}
           tag: ${{ github.ref_name }}
           name: ${{ github.ref_name }}
           body: "前往插件主页获取授权：https://yanqs.me/wp-comment-notify-plugin/"
