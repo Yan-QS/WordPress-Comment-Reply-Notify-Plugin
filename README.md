@@ -4,7 +4,7 @@
 
 这是一个简单但功能强大的 WordPress 插件，旨在增强和自定义评论通知邮件。它通过提供可靠的 SMTP 发信、可编辑的 HTML 模板和详细的调试工具，弥补了 WordPress 默认邮件功能的不足。
 
-获取授权：[https://yanqs.me/wp-comment-notify-plugin/](https://yanqs.me/wp-comment-notify-plugin/)
+插件主页：[https://yanqs.me/wp-comment-notify-plugin/](https://yanqs.me/wp-comment-notify-plugin/)
 
 ## 主要特性
 
@@ -47,7 +47,7 @@
 
 ## 安装与激活
 
-1.  前往 [Releases](https://github.com/YanQS-Blog/WordPress-Comment-Reply-Notify-Plugin/releases) 下载最新版本。
+1.  下载最新版本：参见 Releases 页面 https://github.com/YanQS-Blog/WordPress-Comment-Reply-Notify-Plugin/releases
 2.  将整个文件夹上传到 WordPress 站点的 `/wp-content/plugins/` 目录下。
 3.  登录 WordPress 后台，进入“插件”页面。
 4.  找到“WP Comment & Reply Notify”并点击“激活”。

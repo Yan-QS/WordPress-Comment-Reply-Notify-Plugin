@@ -43,20 +43,10 @@ msgstr "Please check SMTP settings and server logs (search for 'pcn SMTP debug')
 msgid "请填写有效的测试收件人邮箱。"
 msgstr "Please enter a valid test recipient email."
 
-msgid "密钥验证请求失败：%s"
-msgstr "License verification request failed: %s"
-
-msgid "密钥验证成功！"
-msgstr "License verification successful!"
-
-msgid "密钥无效或已过期。"
-msgstr "License invalid or expired."
 
 msgid "设置已保存。"
 msgstr "Settings saved."
 
-msgid "试用期已结束，插件功能已禁用。请输入有效密钥以重新激活。"
-msgstr "Trial period ended, plugin disabled. Please enter a valid license key to reactivate."
 
 msgid "WP Comment & Reply Notify 设置"
 msgstr "WP Comment & Reply Notify Settings"
@@ -76,32 +66,7 @@ msgstr "Email Templates"
 msgid "测试与日志"
 msgstr "Test & Logs"
 
-msgid "授权与状态"
-msgstr "License & Status"
-
-msgid "授权密钥购买"
-msgstr "Buy License Key"
-
-msgid "授权密钥"
-msgstr "License Key"
-
-msgid "有效"
-msgstr "Valid"
-
-msgid "无效"
-msgstr "Invalid"
-
-msgid "插件状态"
-msgstr "Plugin Status"
-
-msgid "已激活"
-msgstr "Activated"
-
-msgid "试用中，剩余 %d 天"
-msgstr "Trial active, %d days remaining"
-
-msgid "试用结束，已禁用"
-msgstr "Trial ended, disabled"
+/* License and trial-related strings removed because licensing is no longer required. */
 
 msgid "插件总开关"
 msgstr "Plugin Master Switch"

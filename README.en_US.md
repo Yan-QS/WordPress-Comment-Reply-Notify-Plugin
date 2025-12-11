@@ -6,7 +6,7 @@
 
 This is a simple yet powerful WordPress plugin designed to enhance and customize comment notification emails. It addresses the shortcomings of WordPress's default email functionality by providing reliable SMTP sending, editable HTML templates, and detailed debugging tools.
 
-Get License: [https://yanqs.me/wp-comment-notify-plugin/](https://yanqs.me/wp-comment-notify-plugin/)
+Plugin Homepage: [https://yanqs.me/wp-comment-notify-plugin/](https://yanqs.me/wp-comment-notify-plugin/)
 
 ## Key Features
 

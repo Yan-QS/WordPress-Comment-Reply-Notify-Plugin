@@ -80,46 +80,11 @@
         <?php wp_nonce_field('pcn_save_settings'); ?>
 
         <div id="tab-general" class="pcn-tab-content active">
-            <h2><?php _e('授权与状态', 'wp-comment-notify'); ?></h2>
-        <p>
-            <a href="https://yanqs.me/wp-comment-notify-plugin/" target="_blank" rel="noopener noreferrer">
-                <?php _e('授权密钥购买', 'wp-comment-notify'); ?>
-            </a>
-        </p>
-        <table class="form-table">
-            <tr>
-                <th scope="row"><?php _e('授权密钥', 'wp-comment-notify'); ?></th>
-                <td>
-                    <input type="text" name="pcn_license_key" value="<?php echo esc_attr($license_key); ?>" class="regular-text" />
-                    <?php if ($is_licensed): ?>
-                        <span style="color:green;"><?php _e('有效', 'wp-comment-notify'); ?></span>
-                    <?php else: ?>
-                        <span style="color:red;"><?php _e('无效', 'wp-comment-notify'); ?></span>
-                    <?php endif; ?>
-                </td>
-            </tr>
-            <tr>
-                <th scope="row"><?php _e('插件状态', 'wp-comment-notify'); ?></th>
-                <td>
-                    <?php
-                    if ($is_licensed) {
-                        echo '<span style="color:green;font-weight:bold;">' . __('已激活', 'wp-comment-notify') . '</span>';
-                    } elseif ($is_trial_active) {
-                        $remaining_days = ceil(($trial_end_time - time()) / 86400);
-                        echo '<span style="color:orange;font-weight:bold;">' . sprintf(__('试用中，剩余 %d 天', 'wp-comment-notify'), $remaining_days) . '</span>';
-                    } else {
-                        echo '<span style="color:red;font-weight:bold;">' . __('试用结束，已禁用', 'wp-comment-notify') . '</span>';
-                    }
-                    ?>
-                </td>
-            </tr>
-        </table>
-
         <h2><?php _e('插件总开关', 'wp-comment-notify'); ?></h2>
         <table class="form-table">
             <tr>
                 <th scope="row"><?php _e('启用插件功能', 'wp-comment-notify'); ?></th>
-                <td><input type="checkbox" name="pcn_enabled" value="1" <?php checked(! empty($enabled)); ?> <?php disabled(!$is_licensed && !$is_trial_active); ?> /> <?php _e('启用后才会在评论提交时发送通知邮件。', 'wp-comment-notify'); ?></td>
+                <td><input type="checkbox" name="pcn_enabled" value="1" <?php checked(! empty($enabled)); ?> /> <?php _e('启用后才会在评论提交时发送通知邮件。', 'wp-comment-notify'); ?></td>
             </tr>
             <tr>
                 <th scope="row"><?php _e('强制使用用户名作为发信地址', 'wp-comment-notify'); ?></th>

@@ -37,10 +37,6 @@ if (is_admin()) {
 
 // 激活/卸载钩子
 function pcn_activate() {
-    // 如果从未设置过，则记录插件首次激活时间，用于3天试用期计算
-    if (false === get_option('pcn_install_date')) {
-        update_option('pcn_install_date', time());
-    }
 }
 register_activation_hook(__FILE__, 'pcn_activate');
 

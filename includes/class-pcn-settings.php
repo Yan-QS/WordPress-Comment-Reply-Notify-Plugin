@@ -24,8 +24,6 @@ class PCN_Settings {
         register_setting('pcn_settings_group', 'pcn_smtp_settings');
         register_setting('pcn_settings_group', 'pcn_templates');
         register_setting('pcn_settings_group', 'pcn_enabled');
-        register_setting('pcn_settings_group', 'pcn_license_key');
-        register_setting('pcn_settings_group', 'pcn_license_status');
     }
 
     public static function render_options_page() {
@@ -38,13 +36,7 @@ class PCN_Settings {
         // Prepare data for view
         $smtp = get_option('pcn_smtp_settings', array());
         $enabled = get_option('pcn_enabled', 1);
-        $license_key = get_option('pcn_license_key', '');
-        $license_status = get_option('pcn_license_status', 'invalid');
-        $install_date = get_option('pcn_install_date', time());
-        $trial_days = 3;
-        $trial_end_time = $install_date + ($trial_days * 86400);
-        $is_trial_active = time() < $trial_end_time;
-        $is_licensed = $license_status === 'valid';
+        // No license enforcement — plugin available by default
 
         $saved_templates = get_option('pcn_templates');
         $file_templates = self::get_templates_from_files();
@@ -158,36 +150,7 @@ class PCN_Settings {
     }
 
     private static function save_settings() {
-        // 验证并保存密钥
-        $new_key = sanitize_text_field($_POST['pcn_license_key']);
-        $old_key = get_option('pcn_license_key');
-        $old_status = get_option('pcn_license_status');
-
-        if ($new_key !== $old_key || $old_status !== 'valid') {
-            if (empty($new_key)) {
-                update_option('pcn_license_key', '');
-                update_option('pcn_license_status', 'invalid');
-            } else {
-                $api_url = base64_decode('aHR0cHM6Ly95YW5xcy5tZS9WZXJpZmljYXRpb24vdmVyaWZ5LnBocD9wYXNzPQ==');
-                $response = wp_remote_get($api_url . $new_key);
-                if (is_wp_error($response)) {
-                    echo '<div class="error"><p>' . sprintf(__('密钥验证请求失败：%s', 'wp-comment-notify'), esc_html($response->get_error_message())) . '</p></div>';
-                    update_option('pcn_license_status', 'invalid');
-                } else {
-                    $body = wp_remote_retrieve_body($response);
-                    $data = json_decode($body, true);
-                    if (isset($data['status']) && $data['status'] === 'pass') {
-                        update_option('pcn_license_key', $new_key);
-                        update_option('pcn_license_status', 'valid');
-                        echo '<div class="updated"><p>' . __('密钥验证成功！', 'wp-comment-notify') . '</p></div>';
-                    } else {
-                        update_option('pcn_license_key', $new_key);
-                        update_option('pcn_license_status', 'invalid');
-                        echo '<div class="error"><p>' . __('密钥无效或已过期。', 'wp-comment-notify') . '</p></div>';
-                    }
-                }
-            }
-        }
+        // 不再处理授权密钥；直接保存其他设置
 
         // 总开关
         $enabled = ! empty($_POST['pcn_enabled']) ? 1 : 0;

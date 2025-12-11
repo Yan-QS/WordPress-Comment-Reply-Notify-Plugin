@@ -34,7 +34,7 @@ jobs:
           token: ${{ secrets.RELEASE_TOKEN }}
           tag: ${{ github.ref_name }}
           name: ${{ github.ref_name }}
-          body: "前往插件主页获取授权：https://yanqs.me/wp-comment-notify-plugin/"
+          body: "插件主页：https://yanqs.me/wp-comment-notify-plugin/"
           draft: false
           prerelease: false
 
