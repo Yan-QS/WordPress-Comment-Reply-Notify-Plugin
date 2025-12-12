@@ -469,6 +469,14 @@
                 }
                 e.preventDefault();
                 var data = $form.serializeArray();
+                // include secondary nonces that may live outside the main form
+                var extraNonces = ['pcn_test_smtp_nonce','pcn_clear_credentials_nonce','pcn_show_logs_nonce'];
+                extraNonces.forEach(function(n){
+                    var $f = $("[name='"+n+"']");
+                    if ($f.length) {
+                        data.push({ name: n, value: $f.val() });
+                    }
+                });
                 if ($btn.attr('name')) {
                     data.push({ name: $btn.attr('name'), value: $btn.val() });
                 } else if ($btn.attr('id')) {
