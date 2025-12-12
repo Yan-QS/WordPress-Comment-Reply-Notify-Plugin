@@ -10,6 +10,8 @@ class PCN_Settings {
         add_action('admin_init', array(__CLASS__, 'register_settings'));
         // AJAX diagnostics
         add_action('wp_ajax_pcn_run_diagnostics', array(__CLASS__, 'ajax_run_diagnostics'));
+        // AJAX refresh logs
+        add_action('wp_ajax_pcn_refresh_logs', array(__CLASS__, 'ajax_refresh_logs'));
     }
 
     public static function add_admin_menu() {
@@ -84,7 +86,7 @@ class PCN_Settings {
         if (! current_user_can('manage_options')) {
             return;
         }
-        if (isset($_POST['pcn_test_smtp']) && check_admin_referer('pcn_test_smtp')) {
+        if (isset($_POST['pcn_test_smtp']) && check_admin_referer('pcn_test_smtp', 'pcn_test_smtp_nonce')) {
             self::handle_smtp_test();
         }
 
@@ -93,7 +95,7 @@ class PCN_Settings {
         }
         
         // Clear stored sensitive credentials
-        if (isset($_POST['pcn_clear_credentials']) && check_admin_referer('pcn_clear_credentials')) {
+        if (isset($_POST['pcn_clear_credentials']) && check_admin_referer('pcn_clear_credentials', 'pcn_clear_credentials_nonce')) {
             $settings = get_option('pcn_smtp_settings', array());
             $settings['password'] = '';
             $settings['client_secret'] = '';
@@ -102,12 +104,12 @@ class PCN_Settings {
             echo '<div class="updated"><p>' . __('已清除敏感凭据（后台已不再回显）。建议使用环境变量提供凭据。', 'wp-comment-notify') . '</p></div>';
         }
         
-        if (isset($_POST['pcn_clear_logs']) && check_admin_referer('pcn_show_logs')) {
+        if (isset($_POST['pcn_clear_logs']) && check_admin_referer('pcn_show_logs', 'pcn_show_logs_nonce')) {
             delete_option('pcn_email_logs');
             echo '<div class="updated"><p>' . __('已清空邮件发送日志。', 'wp-comment-notify') . '</p></div>';
         }
 
-        if (isset($_POST['pcn_clear_debug_logs']) && check_admin_referer('pcn_test_smtp')) {
+        if (isset($_POST['pcn_clear_debug_logs']) && check_admin_referer('pcn_test_smtp', 'pcn_test_smtp_nonce')) {
             delete_option('pcn_debug_log');
             echo '<div class="updated"><p>' . __('已清空 SMTP 调试日志。', 'wp-comment-notify') . '</p></div>';
         }
@@ -118,13 +120,13 @@ class PCN_Settings {
         }
 
         // Export logs CSV (POST submit)
-        if (isset($_POST['pcn_export_logs']) && check_admin_referer('pcn_show_logs')) {
+        if (isset($_POST['pcn_export_logs']) && check_admin_referer('pcn_show_logs', 'pcn_show_logs_nonce')) {
             $days = isset($_POST['pcn_export_days']) ? intval($_POST['pcn_export_days']) : 0;
             self::export_logs_csv($days);
         }
 
         // Apply retention policy
-        if (isset($_POST['pcn_set_retention']) && check_admin_referer('pcn_show_logs')) {
+        if (isset($_POST['pcn_set_retention']) && check_admin_referer('pcn_show_logs', 'pcn_show_logs_nonce')) {
             $days = isset($_POST['pcn_retention_days']) ? intval($_POST['pcn_retention_days']) : 0;
             if ($days > 0) {
                 self::apply_retention_policy($days);
@@ -289,6 +291,25 @@ class PCN_Settings {
         $days = intval($days);
         if ($days <= 0) { return; }
         $threshold = gmdate('Y-m-d H:i:s', time() - $days * 24 * 3600);
+
+        // Ensure the table exists before running DELETE; otherwise fall back to option-based logs
+        $check = $wpdb->get_results($wpdb->prepare("SHOW TABLES LIKE %s", $wpdb->esc_like($table)));
+        if (empty($check)) {
+            // Fallback: filter legacy option logs if present
+            $opt = get_option('pcn_email_logs', array());
+            if (is_array($opt) && ! empty($opt)) {
+                $keep = array();
+                foreach ($opt as $entry) {
+                    $t = isset($entry['time']) ? $entry['time'] : '';
+                    if ($t === '' || strtotime($t) >= strtotime($threshold)) {
+                        $keep[] = $entry;
+                    }
+                }
+                update_option('pcn_email_logs', $keep);
+            }
+            return;
+        }
+
         $wpdb->query($wpdb->prepare("DELETE FROM {$table} WHERE time < %s", $threshold));
     }
 
@@ -402,6 +423,41 @@ class PCN_Settings {
         $result['certificate'] = $cert_info;
 
         wp_send_json_success($result);
+    }
+
+    public static function ajax_refresh_logs() {
+        if (! current_user_can('manage_options')) {
+            wp_send_json_error('permission');
+        }
+        check_ajax_referer('pcn_show_logs', 'nonce');
+
+        global $wpdb;
+        $table = $wpdb->prefix . 'pcn_email_logs';
+        $n = isset($_POST['n']) ? intval($_POST['n']) : 50;
+        $n = max(1, min(500, $n));
+
+        // If DB table exists, read from it; otherwise fallback to option
+        $check = $wpdb->get_results($wpdb->prepare("SHOW TABLES LIKE %s", $wpdb->esc_like($table)));
+        $rows = array();
+        if (! empty($check)) {
+            $rows = $wpdb->get_results($wpdb->prepare("SELECT time, `to`, subject, status, error FROM {$table} ORDER BY time DESC LIMIT %d", $n), ARRAY_A);
+        } else {
+            $opt = get_option('pcn_email_logs', array());
+            if (is_array($opt)) {
+                $sliced = array_slice($opt, 0, $n);
+                foreach ($sliced as $r) {
+                    $rows[] = array(
+                        'time' => $r['time'] ?? '',
+                        'to' => $r['to'] ?? '',
+                        'subject' => $r['subject'] ?? '',
+                        'status' => $r['status'] ?? '',
+                        'error' => $r['error'] ?? '',
+                    );
+                }
+            }
+        }
+
+        wp_send_json_success(array('rows' => $rows));
     }
 
     private static function save_settings() {

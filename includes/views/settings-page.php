@@ -224,7 +224,7 @@
             <p><?php _e('注意：OAuth2 认证仅在部分 SMTP 服务（如 Gmail/Google Workspace）支持，且需要预先在对应平台创建应用并获取相关凭据。SMTP 调试成功后请务必删除主题目录下的 smtp_test.php 文件。', 'wp-comment-notify'); ?></p>
             <p style="margin-top:15px;">
                 <button type="submit" name="pcn_clear_credentials" class="button" onclick="return confirm('<?php echo esc_js( __( '确定要清除所有已保存的敏感凭据吗？推荐通过环境变量提供凭据。', 'wp-comment-notify' ) ); ?>');"><?php esc_html_e('清除凭据', 'wp-comment-notify'); ?></button>
-                <?php wp_nonce_field('pcn_clear_credentials'); ?>
+                <?php wp_nonce_field('pcn_clear_credentials', 'pcn_clear_credentials_nonce'); ?>
             </p>
             <p style="margin-top:8px;">
                 <button type="button" class="button button-secondary" id="pcn-run-diagnostics"><?php _e('Run SMTP Diagnostics', 'wp-comment-notify'); ?></button>
@@ -377,8 +377,7 @@
 
     <div id="tab-test" class="pcn-tab-content">
         <h2><?php _e('SMTP 测试', 'wp-comment-notify'); ?></h2>
-        <form method="post">
-            <?php wp_nonce_field('pcn_test_smtp'); ?>
+        <?php wp_nonce_field('pcn_test_smtp', 'pcn_test_smtp_nonce'); ?>
             <table class="form-table">
                 <tr>
                     <th scope="row"><?php _e('测试收件人邮箱', 'wp-comment-notify'); ?></th>
@@ -389,7 +388,7 @@
                 <input type="submit" name="pcn_test_smtp" class="button" value="<?php esc_attr_e('发送测试邮件', 'wp-comment-notify'); ?>" />
                 <input type="submit" name="pcn_clear_debug_logs" class="button" value="<?php esc_attr_e('清空调试日志', 'wp-comment-notify'); ?>" />
             </p>
-        </form>
+        
 
         <?php if (! empty($debug_logs)): ?>
             <h3><?php _e('SMTP 调试日志', 'wp-comment-notify'); ?></h3>
@@ -403,12 +402,11 @@
 
     <div id="tab-logs" class="pcn-tab-content">
         <h2><?php _e('邮件发送记录', 'wp-comment-notify'); ?></h2>
-        <form method="post">
-            <?php wp_nonce_field('pcn_show_logs'); ?>
+        <?php wp_nonce_field('pcn_show_logs', 'pcn_show_logs_nonce'); ?>
             <p>
                 <?php _e('显示最近 N 条：', 'wp-comment-notify'); ?>
-                <input type="number" name="pcn_logs_n" value="<?php echo isset($_POST['pcn_logs_n']) ? intval($_POST['pcn_logs_n']) : 50; ?>" class="small-text" />
-                <input type="submit" name="pcn_show_logs" class="button" value="<?php esc_attr_e('刷新', 'wp-comment-notify'); ?>" />
+                <input type="number" id="pcn_logs_n" name="pcn_logs_n" value="<?php echo isset($_POST['pcn_logs_n']) ? intval($_POST['pcn_logs_n']) : 50; ?>" class="small-text" />
+                <button type="button" id="pcn-refresh-logs-ajax" class="button"><?php esc_html_e('刷新', 'wp-comment-notify'); ?></button>
                 <input type="submit" name="pcn_clear_logs" class="button" value="<?php esc_attr_e('清空日志', 'wp-comment-notify'); ?>" />
             </p>
 
@@ -424,7 +422,7 @@
                 <input type="submit" name="pcn_set_retention" class="button" value="<?php esc_attr_e('应用保留策略', 'wp-comment-notify'); ?>" />
             </p>
         </form>
-        <table class="widefat fixed striped">
+        <table class="widefat fixed striped" id="pcn-logs-table">
             <thead>
                 <tr>
                     <th style="width: 160px;"><?php _e('时间', 'wp-comment-notify'); ?></th>
@@ -458,5 +456,41 @@
                 <?php endif; ?>
             </tbody>
         </table>
+        <script>
+            jQuery(function($){
+                var ajaxurl = '<?php echo admin_url('admin-ajax.php'); ?>';
+                $('#pcn-refresh-logs-ajax').on('click', function(){
+                    var n = parseInt($('#pcn_logs_n').val()) || 50;
+                    var nonce = '<?php echo esc_js(wp_create_nonce('pcn_show_logs')); ?>';
+                    var $btn = $(this).prop('disabled', true).text('<?php echo esc_js(__('Refreshing...', 'wp-comment-notify')); ?>');
+                    $.post(ajaxurl, { action: 'pcn_refresh_logs', nonce: nonce, n: n }, function(resp){
+                        $btn.prop('disabled', false).text('<?php echo esc_js(__('AJAX 刷新', 'wp-comment-notify')); ?>');
+                        if (resp.success) {
+                            var rows = resp.data.rows || [];
+                            var html = '';
+                            if (rows.length === 0) {
+                                html = '<tr><td colspan="5><?php echo esc_js(__('暂无记录。', 'wp-comment-notify')); ?></td></tr>';
+                            } else {
+                                rows.forEach(function(r){
+                                    html += '<tr>';
+                                    html += '<td>' + (r.time || '') + '</td>';
+                                    html += '<td>' + $('<div/>').text(r.to || '').html() + '</td>';
+                                    html += '<td>' + $('<div/>').text(r.subject || '').html() + '</td>';
+                                    html += '<td>' + (r.status === 'success' ? '<span style="color:green;"><?php echo esc_js(__('成功', 'wp-comment-notify')); ?></span>' : '<span style="color:red;"><?php echo esc_js(__('失败', 'wp-comment-notify')); ?></span>') + '</td>';
+                                    html += '<td>' + $('<div/>').text(r.error || '').html() + '</td>';
+                                    html += '</tr>';
+                                });
+                            }
+                            $('#pcn-logs-table tbody').html(html);
+                        } else {
+                            alert('Refresh failed');
+                        }
+                    }, 'json').fail(function(){
+                        $btn.prop('disabled', false).text('<?php echo esc_js(__('AJAX 刷新', 'wp-comment-notify')); ?>');
+                        alert('Request failed');
+                    });
+                });
+            });
+        </script>
     </div> <!-- End tab-logs -->
 </div> <!-- End wrap -->
