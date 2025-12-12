@@ -460,8 +460,8 @@
         jQuery(function($){
             var ajaxurl = '<?php echo admin_url('admin-ajax.php'); ?>';
             var $form = $('.pcn-wrap > form');
-            // Intercept submit/clicks on buttons inside main form
-            $form.on('click', 'input[type=submit], button[type=submit], button', function(e){
+            // Intercept clicks only on submit buttons inside main form
+            $form.on('click', 'input[type=submit], button[type=submit]', function(e){
                 var $btn = $(this);
                 // let dedicated handlers run (diagnostics, queue refresh, logs refresh)
                 if ($btn.is('#pcn-run-diagnostics') || $btn.is('#pcn-refresh-queue') || $btn.is('#pcn-refresh-logs-ajax')) {
