@@ -751,7 +751,7 @@ class PCN_Settings {
         $templates['new_comment'] = wp_kses_post($_POST['tpl_new_comment']);
         $templates['pending'] = wp_kses_post($_POST['tpl_pending']);
 
-        $tpl_dir = PCN_PLUGIN_DIR . 'templates/';
+        $tpl_dir = PCN_PLUGIN_DIR . 'includes/templates/';
         if (! file_exists($tpl_dir)) {
             @mkdir($tpl_dir, 0755, true);
         }
@@ -774,7 +774,7 @@ class PCN_Settings {
     }
 
     public static function get_templates_from_files() {
-        $tpl_dir = PCN_PLUGIN_DIR . 'templates/';
+        $tpl_dir = PCN_PLUGIN_DIR . 'includes/templates/';
         $tpls = array();
         $files = array('reply', 'new_comment', 'pending');
         foreach ($files as $f) {

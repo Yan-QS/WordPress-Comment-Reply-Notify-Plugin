@@ -351,7 +351,7 @@ class PCN_Mailer {
     }
 
     public static function get_template($name, $vars = array()) {
-        $tpl_dir = PCN_PLUGIN_DIR . 'templates/';
+        $tpl_dir = PCN_PLUGIN_DIR . 'includes/templates/';
         $path = $tpl_dir . $name . '.php';
         $tpl = '';
 

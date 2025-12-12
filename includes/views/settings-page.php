@@ -383,7 +383,7 @@
         </div> <!-- End tab-smtp -->
         <div id="tab-templates" class="pcn-tab-content">
         <h2><?php _e('邮件模板', 'wp-comment-notify'); ?></h2>
-        <p><?php _e('编辑 HTML 模板。系统会尝试将更改写入插件的 `templates/` 目录（需可写）。如果写入失败，模板会保存到数据库选项 `pcn_templates`。', 'wp-comment-notify'); ?></p>
+        <p><?php _e('编辑 HTML 模板。系统会尝试将更改写入插件的 `includes/templates/` 目录（需可写）。如果写入失败，模板会保存到数据库选项 `pcn_templates`。', 'wp-comment-notify'); ?></p>
         <h3><?php _e('回复通知模板 (reply)', 'wp-comment-notify'); ?></h3>
         <p class="description"><?php _e('可用变量：{{blogname}}, {{parent_author}}, {{parent_content}}, {{reply_author}}, {{reply_content}}, {{comment_link}}, {{unsubscribe_url}}', 'wp-comment-notify'); ?></p>
         <?php wp_editor($tpls['reply'] ?? '', 'tpl_reply', array('textarea_name' => 'tpl_reply', 'textarea_rows' => 15, 'media_buttons' => false, 'tinymce' => false)); ?>
