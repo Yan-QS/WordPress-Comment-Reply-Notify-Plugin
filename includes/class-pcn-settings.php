@@ -14,6 +14,8 @@ class PCN_Settings {
         add_action('wp_ajax_pcn_refresh_logs', array(__CLASS__, 'ajax_refresh_logs'));
         // AJAX load debug logs
         add_action('wp_ajax_pcn_load_debug_logs', array(__CLASS__, 'ajax_load_debug_logs'));
+        // AJAX clear debug logs
+        add_action('wp_ajax_pcn_clear_debug_logs', array(__CLASS__, 'ajax_clear_debug_logs'));
         // Generic AJAX form submit for settings page
         add_action('wp_ajax_pcn_ajax_form', array(__CLASS__, 'ajax_handle_form'));
         // Handle CSV export via admin-post to allow direct download in iframe
@@ -488,6 +490,15 @@ class PCN_Settings {
         $logs = get_option('pcn_debug_log', array());
         if (! is_array($logs)) { $logs = array(); }
         wp_send_json_success(array('logs' => $logs));
+    }
+
+    public static function ajax_clear_debug_logs() {
+        if (! current_user_can('manage_options')) {
+            wp_send_json_error('permission');
+        }
+        check_ajax_referer('pcn_test_smtp', 'nonce');
+        delete_option('pcn_debug_log');
+        wp_send_json_success(array('msg' => __('已清空 SMTP 调试日志。', 'wp-comment-notify')));
     }
 
     public static function ajax_refresh_logs() {

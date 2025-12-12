@@ -471,6 +471,22 @@
                     }
                 }, 'json').fail(function(){ $btn.prop('disabled', false); alert('<?php echo esc_js(__('请求失败', 'wp-comment-notify')); ?>'); });
             });
+            // Clear debug logs via AJAX (no page reload)
+            $('input[name="pcn_clear_debug_logs"]').on('click', function(e){
+                e.preventDefault();
+                var $btn = $(this).prop('disabled', true);
+                var nonce = ($('[name="pcn_test_smtp_nonce"]').length) ? $('[name="pcn_test_smtp_nonce"]').val() : '';
+                $.post(ajaxurl, { action: 'pcn_clear_debug_logs', nonce: nonce }, function(res){
+                    $btn.prop('disabled', false);
+                    if (res.success) {
+                        $('#pcn-debug-logs').text('').hide();
+                        // show a brief notice in the ajax result area
+                        $('#pcn-ajax-result').html('<div class="updated"><p>' + '<?php echo esc_js(__('已清空 SMTP 调试日志。', 'wp-comment-notify')); ?>' + '</p></div>');
+                    } else {
+                        alert('<?php echo esc_js(__('清空失败', 'wp-comment-notify')); ?>');
+                    }
+                }, 'json').fail(function(){ $btn.prop('disabled', false); alert('<?php echo esc_js(__('请求失败', 'wp-comment-notify')); ?>'); });
+            });
             // Ensure an invisible iframe exists for background CSV download
             if (!$('#pcn-export-iframe').length) {
                 $('<iframe id="pcn-export-iframe" name="pcn-export-iframe" style="display:none"></iframe>').appendTo('body');
