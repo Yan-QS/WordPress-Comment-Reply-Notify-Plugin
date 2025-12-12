@@ -226,6 +226,10 @@
                 <button type="submit" name="pcn_clear_credentials" class="button" onclick="return confirm('<?php echo esc_js( __( '确定要清除所有已保存的敏感凭据吗？推荐通过环境变量提供凭据。', 'wp-comment-notify' ) ); ?>');"><?php esc_html_e('清除凭据', 'wp-comment-notify'); ?></button>
                 <?php wp_nonce_field('pcn_clear_credentials'); ?>
             </p>
+            <p style="margin-top:8px;">
+                <button type="button" class="button button-secondary" id="pcn-run-diagnostics"><?php _e('Run SMTP Diagnostics', 'wp-comment-notify'); ?></button>
+            </p>
+            <div id="pcn-diagnostics-result" style="margin-top:8px;color:#444"></div>
             <h3 style="margin-top:20px;"><?php _e('邮件队列设置', 'wp-comment-notify'); ?></h3>
             <p class="description"><?php _e('启用异步邮件队列以减少请求阻塞并支持重试/重试退避。', 'wp-comment-notify'); ?></p>
             <table class="form-table">
@@ -316,6 +320,35 @@
                         });
                     });
                 })(jQuery);
+            </script>
+            <script>
+            jQuery(function($){
+                $('#pcn-run-diagnostics').on('click', function(e){
+                    e.preventDefault();
+                    var $btn = $(this).prop('disabled', true).text('<?php echo esc_js(__('Running...', 'wp-comment-notify')); ?>');
+                    var nonce = '<?php echo esc_js(wp_create_nonce('pcn_diagnostics')); ?>';
+                    $.post(ajaxurl, { action: 'pcn_run_diagnostics', nonce: nonce }, function(resp){
+                        $btn.prop('disabled', false).text('<?php echo esc_js(__('Run SMTP Diagnostics', 'wp-comment-notify')); ?>');
+                        if (resp.success) {
+                            var r = resp.data;
+                            var html = [];
+                            html.push('<strong><?php echo esc_js(__('Host', 'wp-comment-notify')); ?>:</strong> ' + (r.host_resolution.msg || ''));
+                            html.push('<br><strong><?php echo esc_js(__('Connect', 'wp-comment-notify')); ?>:</strong> ' + (r.connect.msg || ''));
+                            html.push('<br><strong><?php echo esc_js(__('MX', 'wp-comment-notify')); ?>:</strong> ' + (r.mx.msg || ''));
+                            html.push('<br><strong><?php echo esc_js(__('SPF', 'wp-comment-notify')); ?>:</strong> ' + (r.spf.msg || ''));
+                            if (r.certificate && r.certificate.msg) {
+                                html.push('<br><strong><?php echo esc_js(__('Certificate', 'wp-comment-notify')); ?>:</strong> ' + r.certificate.msg);
+                            }
+                            $('#pcn-diagnostics-result').html(html.join(''));
+                        } else {
+                            $('#pcn-diagnostics-result').text('Diagnostics failed');
+                        }
+                    }, 'json').fail(function(){
+                        $btn.prop('disabled', false).text('<?php echo esc_js(__('Run SMTP Diagnostics', 'wp-comment-notify')); ?>');
+                        $('#pcn-diagnostics-result').text('Request failed');
+                    });
+                });
+            });
             </script>
         </table>
 

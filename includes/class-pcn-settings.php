@@ -8,6 +8,8 @@ class PCN_Settings {
     public static function init() {
         add_action('admin_menu', array(__CLASS__, 'add_admin_menu'));
         add_action('admin_init', array(__CLASS__, 'register_settings'));
+        // AJAX diagnostics
+        add_action('wp_ajax_pcn_run_diagnostics', array(__CLASS__, 'ajax_run_diagnostics'));
     }
 
     public static function add_admin_menu() {
@@ -288,6 +290,118 @@ class PCN_Settings {
         if ($days <= 0) { return; }
         $threshold = gmdate('Y-m-d H:i:s', time() - $days * 24 * 3600);
         $wpdb->query($wpdb->prepare("DELETE FROM {$table} WHERE time < %s", $threshold));
+    }
+
+    public static function ajax_run_diagnostics() {
+        if (! current_user_can('manage_options')) {
+            wp_send_json_error('permission');
+        }
+        check_ajax_referer('pcn_diagnostics', 'nonce');
+
+        $settings = get_option('pcn_smtp_settings', array());
+        $result = array();
+
+        // Host resolution
+        $host = $settings['host'] ?? '';
+        if (empty($host)) {
+            $result['host_resolution'] = array('ok' => false, 'msg' => 'No SMTP host configured');
+        } else {
+            $ip = gethostbyname($host);
+            if ($ip === $host || empty($ip)) {
+                $result['host_resolution'] = array('ok' => false, 'msg' => "DNS lookup failed for {$host}");
+            } else {
+                $result['host_resolution'] = array('ok' => true, 'msg' => "Resolved to {$ip}");
+            }
+        }
+
+        // MX / SPF checks for from domain
+        $from = $settings['from_email'] ?? get_bloginfo('admin_email');
+        $domain = '';
+        if ($from && is_email($from)) {
+            $parts = explode('@', $from);
+            if (count($parts) === 2) { $domain = $parts[1]; }
+        }
+        if ($domain) {
+            $mx = array();
+            $has_mx = function_exists('getmxrr') && @getmxrr($domain, $mx);
+            $result['mx'] = array('ok' => (bool) $has_mx, 'msg' => $has_mx ? 'MX records found' : 'No MX records');
+            // SPF check
+            $txts = dns_get_record($domain, DNS_TXT);
+            $spf_found = false;
+            if ($txts && is_array($txts)) {
+                foreach ($txts as $t) {
+                    if (isset($t['txt']) && stripos($t['txt'], 'v=spf1') !== false) { $spf_found = true; break; }
+                }
+            }
+            $result['spf'] = array('ok' => (bool) $spf_found, 'msg' => $spf_found ? 'SPF record present' : 'No SPF record found');
+        } else {
+            $result['mx'] = array('ok' => false, 'msg' => 'No from-domain to check');
+            $result['spf'] = array('ok' => false, 'msg' => 'No from-domain to check');
+        }
+
+        // Try connecting to SMTP host:port
+        $port = isset($settings['port']) ? intval($settings['port']) : 25;
+        $encryption = $settings['encryption'] ?? '';
+        $timeout = 6;
+        $conn_result = array('ok' => false, 'msg' => '');
+        if (! empty($host)) {
+            $transport = 'tcp';
+            $remote = $host . ':' . $port;
+            $errstr = '';
+            $errno = 0;
+            $fp = @stream_socket_client("{$transport}://{$remote}", $errno, $errstr, $timeout);
+            if (! $fp) {
+                $conn_result['ok'] = false;
+                $conn_result['msg'] = "Connection failed: {$errstr} (errno {$errno})";
+            } else {
+                $conn_result['ok'] = true;
+                $meta = stream_get_meta_data($fp);
+                $conn_result['msg'] = 'Connected (transport tcp)';
+                fclose($fp);
+            }
+            // If SSL wrapper desired, try ssl://
+            if ($encryption === 'ssl' && !$conn_result['ok']) {
+                $fp2 = @stream_socket_client("ssl://{$remote}", $errno, $errstr, $timeout, STREAM_CLIENT_CONNECT);
+                if ($fp2) {
+                    $conn_result['ok'] = true;
+                    $conn_result['msg'] = 'SSL connect succeeded';
+                    fclose($fp2);
+                }
+            }
+        } else {
+            $conn_result['ok'] = false;
+            $conn_result['msg'] = 'No host configured';
+        }
+        $result['connect'] = $conn_result;
+
+        // Certificate info (best effort for SSL)
+        $cert_info = array('ok' => false, 'msg' => 'Not checked');
+        if ($encryption === 'ssl' && ! empty($host)) {
+            $ctx = stream_context_create(array('ssl' => array('capture_peer_cert' => true, 'verify_peer' => false)));
+            $stream = @stream_socket_client("ssl://{$host}:{$port}", $errno, $errstr, $timeout, STREAM_CLIENT_CONNECT, $ctx);
+            if ($stream) {
+                $cont = stream_context_get_params($stream);
+                if (! empty($cont['options']['ssl']['peer_certificate'])) {
+                    $cert = $cont['options']['ssl']['peer_certificate'];
+                    if (function_exists('openssl_x509_parse')) {
+                        $parsed = openssl_x509_parse($cert);
+                        $cert_info['ok'] = true;
+                        $cert_info['msg'] = 'Cert parsed';
+                        $cert_info['parsed'] = $parsed;
+                    } else {
+                        $cert_info['ok'] = true;
+                        $cert_info['msg'] = 'Certificate present (openssl missing)';
+                    }
+                }
+                fclose($stream);
+            } else {
+                $cert_info['ok'] = false;
+                $cert_info['msg'] = "Certificate check failed: {$errstr}";
+            }
+        }
+        $result['certificate'] = $cert_info;
+
+        wp_send_json_success($result);
     }
 
     private static function save_settings() {
