@@ -293,6 +293,122 @@
                 </tr>
             </table>
             <script>
+            (function($){
+                function loadStyle(template, style, targetSelector) {
+                    var ajaxurl_local = '<?php echo admin_url('admin-ajax.php'); ?>';
+                    var data = { action: 'pcn_get_style_template', name: template, style: style };
+                    // debug logs removed in production
+                    $.post(ajaxurl_local, data, function(resp){
+                        if (! (resp && resp.success && resp.data && resp.data.content)) {
+                            // loadStyle failed (silent in production)
+                            var msg = '<?php echo esc_js(__('加载失败', 'wp-comment-notify')); ?>';
+                            if (resp && resp.data && resp.data === 'notfound') { msg = '<?php echo esc_js(__('未找到指定风格模板文件。', 'wp-comment-notify')); ?>'; }
+                            alert(msg);
+                            return;
+                        }
+
+                        var content = resp.data.content;
+                        var ta = $(targetSelector);
+
+                        // Try to set TinyMCE if active
+                        try {
+                            var tid = targetSelector.replace('#','');
+                            if (typeof tinymce !== 'undefined') {
+                                var ed = null;
+                                if (typeof tinymce.get === 'function') { ed = tinymce.get(tid); }
+                                if (!ed && tinymce.editors && tinymce.editors.length) {
+                                    for (var _i = 0; _i < tinymce.editors.length; _i++) {
+                                        if (tinymce.editors[_i] && tinymce.editors[_i].id === tid) { ed = tinymce.editors[_i]; break; }
+                                    }
+                                }
+                                if (ed && typeof ed.setContent === 'function') {
+                                    ed.setContent(content);
+                                    try { tinymce.triggerSave(); } catch (e) { /* ignore */ }
+                                }
+                            }
+                        } catch (e) {
+                            // tinymce set failed (ignored)
+                        }
+
+                        // Fallback: set textarea value and trigger change
+                        if (ta && ta.length) {
+                            try { ta.val(content).trigger('change'); } catch(e){ /* ignore */ }
+                            try {
+                                var dom = document.getElementById(targetSelector.replace('#',''));
+                                if (dom) {
+                                    dom.value = content;
+                                    dom.dispatchEvent(new Event('input', { bubbles: true }));
+                                    dom.dispatchEvent(new Event('change', { bubbles: true }));
+                                }
+                            } catch(e) { /* ignore */ }
+
+                            // If TinyMCE wasn't ready yet, poll briefly and set content when it appears
+                            (function pollTiny(tid, html){
+                                var attempts = 0;
+                                var iv = setInterval(function(){
+                                    attempts++;
+                                    try {
+                                        if (typeof tinymce !== 'undefined' && typeof tinymce.get === 'function') {
+                                            var ed2 = tinymce.get(tid);
+                                            if (ed2 && typeof ed2.setContent === 'function') {
+                                                ed2.setContent(html);
+                                                try { tinymce.triggerSave(); } catch(e){}
+                                                clearInterval(iv);
+                                                return;
+                                            }
+                                        }
+                                    } catch(e) {
+                                        // ignore
+                                    }
+                                    if (attempts > 10) { clearInterval(iv); }
+                                }, 120);
+                            })(targetSelector.replace('#',''), content);
+                        } else {
+                            // target textarea not found
+                        }
+                    }, 'json').fail(function(xhr, status, err){
+                        // ajax error (silent), notify user
+                        alert('<?php echo esc_js(__('请求失败', 'wp-comment-notify')); ?>' + '\n' + (err || status));
+                    });
+                }
+
+                $('#pcn-load-style-reply').on('click', function(){ var s = $('#pcn-style-reply').val(); loadStyle('reply', s, '#tpl_reply'); });
+                $('#pcn-load-style-new_comment').on('click', function(){ var s = $('#pcn-style-new_comment').val(); loadStyle('new_comment', s, '#tpl_new_comment'); });
+                $('#pcn-load-style-pending').on('click', function(){ var s = $('#pcn-style-pending').val(); loadStyle('pending', s, '#tpl_pending'); });
+                // expose for external callers (delegated handlers or other scripts)
+                try { window.pcnLoadStyle = loadStyle; } catch(e) { /* ignore */ }
+            })(jQuery);
+            </script>
+
+            <script>
+            // Delegated fallback: capture clicks on load-style buttons even if bindings missed
+            (function(){
+                // delegated load-style handler installed
+                document.addEventListener('click', function(e){
+                    try {
+                        var t = e.target || e.srcElement;
+                        if (!t) return;
+                        var id = t.id || (t.getAttribute && t.getAttribute('id')) || '';
+                        if (!id) return;
+                        if (id.indexOf('pcn-load-style-') === 0) {
+                            var template = id.replace('pcn-load-style-','');
+                            var sel = '#pcn-style-' + template;
+                            var styleEl = document.querySelector(sel);
+                            var style = styleEl ? styleEl.value : '';
+                            var target = '#tpl_' + template;
+                            if (window.pcnLoadStyle && typeof window.pcnLoadStyle === 'function') {
+                                window.pcnLoadStyle(template, style, target);
+                            } else if (typeof jQuery !== 'undefined') {
+                                // try to call via jQuery context
+                                try { jQuery(function(){ if (window.pcnLoadStyle) window.pcnLoadStyle(template, style, target); }); } catch(ignore){}
+                            }
+                        }
+                    } catch(err) { /* ignore delegated handler errors */ }
+                }, true);
+            })();
+            </script>
+            </script>
+            <script>
                 (function($){
                     var ajaxurl = '<?php echo admin_url('admin-ajax.php'); ?>';
                     var nonce = '<?php echo esc_js($queue_nonce); ?>';
@@ -386,17 +502,126 @@
         <p><?php _e('编辑 HTML 模板。系统会尝试将更改写入插件的 `includes/templates/` 目录（需可写）。如果写入失败，模板会保存到数据库选项 `pcn_templates`。', 'wp-comment-notify'); ?></p>
         <h3><?php _e('回复通知模板 (reply)', 'wp-comment-notify'); ?></h3>
         <p class="description"><?php _e('可用变量：{{blogname}}, {{parent_author}}, {{parent_content}}, {{reply_author}}, {{reply_content}}, {{comment_link}}, {{unsubscribe_url}}', 'wp-comment-notify'); ?></p>
+        <p>
+            <label><?php _e('选择风格模板', 'wp-comment-notify'); ?>:
+                <?php $styles = get_option('pcn_template_style', array()); $s = $styles['reply'] ?? 'modern'; ?>
+                <select id="pcn-style-reply" name="pcn_template_style[reply]">
+                    <option value="modern" <?php selected($s, 'modern'); ?>><?php _e('Modern', 'wp-comment-notify'); ?></option>
+                    <option value="plain" <?php selected($s, 'plain'); ?>><?php _e('Plain', 'wp-comment-notify'); ?></option>
+                    <option value="compact" <?php selected($s, 'compact'); ?>><?php _e('Compact', 'wp-comment-notify'); ?></option>
+                </select>
+                <button type="button" class="button" data-template="reply" data-target="#tpl_reply" id="pcn-load-style-reply"><?php _e('载入所选风格', 'wp-comment-notify'); ?></button>
+                <button type="button" class="button button-secondary" id="pcn-preview-reply" data-template="reply"><?php _e('预览', 'wp-comment-notify'); ?></button>
+            </label>
+        </p>
         <?php wp_editor($tpls['reply'] ?? '', 'tpl_reply', array('textarea_name' => 'tpl_reply', 'textarea_rows' => 15, 'media_buttons' => false, 'tinymce' => false)); ?>
 
         <h3><?php _e('管理员新评论通知模板 (new_comment)', 'wp-comment-notify'); ?></h3>
         <p class="description"><?php _e('可用变量：{{author}}, {{content}}, {{post_title}}, {{comment_id}}, {{comments_waiting}}, {{approve_url}}, {{trash_url}}, {{spam_url}}', 'wp-comment-notify'); ?></p>
+        <p>
+            <label><?php _e('选择风格模板', 'wp-comment-notify'); ?>:
+                <?php $s = $styles['new_comment'] ?? 'modern'; ?>
+                <select id="pcn-style-new_comment" name="pcn_template_style[new_comment]">
+                    <option value="modern" <?php selected($s, 'modern'); ?>><?php _e('Modern', 'wp-comment-notify'); ?></option>
+                    <option value="plain" <?php selected($s, 'plain'); ?>><?php _e('Plain', 'wp-comment-notify'); ?></option>
+                    <option value="compact" <?php selected($s, 'compact'); ?>><?php _e('Compact', 'wp-comment-notify'); ?></option>
+                </select>
+                <button type="button" class="button" data-template="new_comment" data-target="#tpl_new_comment" id="pcn-load-style-new_comment"><?php _e('载入所选风格', 'wp-comment-notify'); ?></button>
+                <button type="button" class="button button-secondary" id="pcn-preview-new_comment" data-template="new_comment"><?php _e('预览', 'wp-comment-notify'); ?></button>
+            </label>
+        </p>
         <?php wp_editor($tpls['new_comment'] ?? '', 'tpl_new_comment', array('textarea_name' => 'tpl_new_comment', 'textarea_rows' => 15, 'media_buttons' => false, 'tinymce' => false)); ?>
 
         <h3><?php _e('待审核通知模板 (pending)', 'wp-comment-notify'); ?></h3>
         <p class="description"><?php _e('可用变量：{{author}}, {{content}}, {{post_title}}, {{comment_id}}, {{comments_waiting}}, {{approve_url}}, {{trash_url}}, {{spam_url}}', 'wp-comment-notify'); ?></p>
+        <p>
+            <label><?php _e('选择风格模板', 'wp-comment-notify'); ?>:
+                <?php $s = $styles['pending'] ?? 'modern'; ?>
+                <select id="pcn-style-pending" name="pcn_template_style[pending]">
+                    <option value="modern" <?php selected($s, 'modern'); ?>><?php _e('Modern', 'wp-comment-notify'); ?></option>
+                    <option value="plain" <?php selected($s, 'plain'); ?>><?php _e('Plain', 'wp-comment-notify'); ?></option>
+                    <option value="compact" <?php selected($s, 'compact'); ?>><?php _e('Compact', 'wp-comment-notify'); ?></option>
+                </select>
+                <button type="button" class="button" data-template="pending" data-target="#tpl_pending" id="pcn-load-style-pending"><?php _e('载入所选风格', 'wp-comment-notify'); ?></button>
+                <button type="button" class="button button-secondary" id="pcn-preview-pending" data-template="pending"><?php _e('预览', 'wp-comment-notify'); ?></button>
+            </label>
+        </p>
         <?php wp_editor($tpls['pending'] ?? '', 'tpl_pending', array('textarea_name' => 'tpl_pending', 'textarea_rows' => 15, 'media_buttons' => false, 'tinymce' => false)); ?>
         
         </div> <!-- End tab-templates -->
+
+    <!-- Preview Modal -->
+    <div id="pcn-preview-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:99999;padding:30px;box-sizing:border-box;">
+        <div style="max-width:900px;margin:0 auto;background:#fff;border-radius:8px;overflow:auto;max-height:80vh;padding:18px;position:relative;">
+            <button id="pcn-preview-close" style="position:absolute;right:12px;top:12px;border:0;background:#eee;padding:6px 10px;border-radius:6px;cursor:pointer;">&times;</button>
+            <h3 style="margin-top:0;"><?php _e('邮件预览', 'wp-comment-notify'); ?></h3>
+            <div id="pcn-preview-content" style="border:1px solid #e6e6e6;padding:16px;border-radius:6px;background:#fafafa;"></div>
+            <p style="margin-top:10px;text-align:right;"><button id="pcn-preview-close-2" class="button"><?php _e('关闭', 'wp-comment-notify'); ?></button></p>
+        </div>
+    </div>
+
+    <script>
+    jQuery(function($){
+        var ajaxurl = '<?php echo admin_url('admin-ajax.php'); ?>';
+        var previewNonce = '<?php echo esc_js($pcn_preview_nonce ?? ''); ?>';
+
+        function getEditorContent(id){
+            // Try TinyMCE first
+            if (typeof tinymce !== 'undefined' && tinymce.get(id) && ! tinymce.get(id).isHidden()) {
+                return tinymce.get(id).getContent();
+            }
+            var ta = document.getElementById(id);
+            return ta ? ta.value : '';
+        }
+
+        function openPreview(html){
+            $('#pcn-preview-content').html(html);
+            $('#pcn-preview-modal').fadeIn(150);
+        }
+
+        function closePreview(){
+            $('#pcn-preview-modal').fadeOut(120);
+        }
+
+        // Attach preview buttons
+        $('#pcn-preview-reply').on('click', function(){
+            var content = getEditorContent('tpl_reply');
+            $.post(ajaxurl, { action: 'pcn_preview_template', name: 'reply', content: content, nonce: previewNonce }, function(resp){
+                if (resp.success && resp.data && resp.data.html) {
+                    openPreview(resp.data.html);
+                } else {
+                    alert('<?php echo esc_js(__('预览失败', 'wp-comment-notify')); ?>');
+                }
+            }, 'json').fail(function(){ alert('<?php echo esc_js(__('请求失败', 'wp-comment-notify')); ?>'); });
+        });
+
+        $('#pcn-preview-new_comment').on('click', function(){
+            var content = getEditorContent('tpl_new_comment');
+            $.post(ajaxurl, { action: 'pcn_preview_template', name: 'new_comment', content: content, nonce: previewNonce }, function(resp){
+                if (resp.success && resp.data && resp.data.html) {
+                    openPreview(resp.data.html);
+                } else {
+                    alert('<?php echo esc_js(__('预览失败', 'wp-comment-notify')); ?>');
+                }
+            }, 'json').fail(function(){ alert('<?php echo esc_js(__('请求失败', 'wp-comment-notify')); ?>'); });
+        });
+
+        $('#pcn-preview-pending').on('click', function(){
+            var content = getEditorContent('tpl_pending');
+            $.post(ajaxurl, { action: 'pcn_preview_template', name: 'pending', content: content, nonce: previewNonce }, function(resp){
+                if (resp.success && resp.data && resp.data.html) {
+                    openPreview(resp.data.html);
+                } else {
+                    alert('<?php echo esc_js(__('预览失败', 'wp-comment-notify')); ?>');
+                }
+            }, 'json').fail(function(){ alert('<?php echo esc_js(__('请求失败', 'wp-comment-notify')); ?>'); });
+        });
+
+        $('#pcn-preview-close,#pcn-preview-close-2').on('click', function(){ closePreview(); });
+        // close on ESC
+        $(document).on('keydown', function(e){ if (e.key === 'Escape') { closePreview(); } });
+    });
+    </script>
 
         <div class="pcn-submit-bar">
             <input type="submit" name="pcn_save_settings" id="submit" class="button button-primary button-hero" value="<?php esc_attr_e('保存所有设置', 'wp-comment-notify'); ?>" />
@@ -634,7 +859,7 @@
                 }
                 if (typeof Chart === 'undefined') {
                     var s = document.createElement('script');
-                    s.src = 'https://cdn.jsdelivr.net/npm/chart.js';
+                    s.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js';
                     s.onload = doRender;
                     document.head.appendChild(s);
                 } else {

@@ -20,6 +20,10 @@ class PCN_Settings {
         add_action('wp_ajax_pcn_get_stats', array(__CLASS__, 'ajax_get_stats'));
         // Generic AJAX form submit for settings page
         add_action('wp_ajax_pcn_ajax_form', array(__CLASS__, 'ajax_handle_form'));
+        // AJAX: get style template content for preview/load
+        add_action('wp_ajax_pcn_get_style_template', array(__CLASS__, 'ajax_get_style_template'));
+        // AJAX: preview rendered template (admin only)
+        add_action('wp_ajax_pcn_preview_template', array(__CLASS__, 'ajax_preview_template'));
         // Handle CSV export via admin-post to allow direct download in iframe
         add_action('admin_post_pcn_export_logs', array(__CLASS__, 'export_logs_csv_handler'));
     }
@@ -60,6 +64,8 @@ class PCN_Settings {
             $tpls = $file_templates;
         }
 
+            // Do not strip PHP tags here: show templates exactly as stored (allow PHP in templates)
+
         // Prepare logs
         $n = isset($_POST['pcn_logs_n']) ? intval($_POST['pcn_logs_n']) : 50;
         $n = max(1, min(500, $n));
@@ -87,6 +93,7 @@ class PCN_Settings {
             'queue_retries' => get_option('pcn_queue_retries', 5),
         );
         $queue_nonce = wp_create_nonce('pcn_queue_action');
+        $pcn_preview_nonce = wp_create_nonce('pcn_preview_template');
 
         // Include view
         include PCN_PLUGIN_DIR . 'includes/views/settings-page.php';
@@ -745,11 +752,11 @@ class PCN_Settings {
         $retries = isset($_POST['pcn_queue_retries']) ? max(0, intval($_POST['pcn_queue_retries'])) : 5;
         update_option('pcn_queue_retries', $retries);
 
-        // 模板编辑
+        // 模板编辑 (保留原始内容，包括 PHP 标签)
         $templates = array();
-        $templates['reply'] = wp_kses_post($_POST['tpl_reply']);
-        $templates['new_comment'] = wp_kses_post($_POST['tpl_new_comment']);
-        $templates['pending'] = wp_kses_post($_POST['tpl_pending']);
+        $templates['reply'] = isset($_POST['tpl_reply']) ? wp_unslash($_POST['tpl_reply']) : '';
+        $templates['new_comment'] = isset($_POST['tpl_new_comment']) ? wp_unslash($_POST['tpl_new_comment']) : '';
+        $templates['pending'] = isset($_POST['tpl_pending']) ? wp_unslash($_POST['tpl_pending']) : '';
 
         $tpl_dir = PCN_PLUGIN_DIR . 'includes/templates/';
         if (! file_exists($tpl_dir)) {
@@ -770,22 +777,135 @@ class PCN_Settings {
             delete_option('pcn_templates');
         }
 
+        // Save selected template styles (per-template)
+        $styles = isset($_POST['pcn_template_style']) && is_array($_POST['pcn_template_style']) ? array_map('sanitize_text_field', $_POST['pcn_template_style']) : array();
+        if (! empty($styles)) {
+            update_option('pcn_template_style', $styles);
+        }
+
         echo '<div class="updated"><p>' . __('设置已保存。', 'wp-comment-notify') . '</p></div>';
     }
 
     public static function get_templates_from_files() {
-        $tpl_dir = PCN_PLUGIN_DIR . 'includes/templates/';
+        $base_dir = PCN_PLUGIN_DIR . 'includes/templates/';
         $tpls = array();
         $files = array('reply', 'new_comment', 'pending');
+
+        // Load per-template selected styles
+        $styles = get_option('pcn_template_style', array());
+
         foreach ($files as $f) {
-            $path = $tpl_dir . $f . '.php';
-            if (file_exists($path)) {
-                $tpls[$f] = file_get_contents($path);
-            } else {
-                $tpls[$f] = '';
+            $content = '';
+            $style = isset($styles[$f]) ? $styles[$f] : '';
+            if ($style) {
+                $styled_path = $base_dir . 'styles/' . $style . '/' . $f . '.php';
+                if (file_exists($styled_path)) {
+                    $content = file_get_contents($styled_path);
+                }
             }
+            // fallback to root template file
+            if ($content === '') {
+                $path = $base_dir . $f . '.php';
+                if (file_exists($path)) {
+                    $content = file_get_contents($path);
+                }
+            }
+            $tpls[$f] = $content;
         }
         return $tpls;
+    }
+
+    public static function ajax_get_style_template() {
+        if (! current_user_can('manage_options')) {
+            wp_send_json_error('permission');
+        }
+        $name = isset($_REQUEST['name']) ? sanitize_text_field($_REQUEST['name']) : '';
+        $style = isset($_REQUEST['style']) ? sanitize_text_field($_REQUEST['style']) : '';
+        if (! in_array($name, array('reply','new_comment','pending'), true) || $style === '') {
+            wp_send_json_error('invalid');
+        }
+        $path = PCN_PLUGIN_DIR . 'includes/templates/styles/' . $style . '/' . $name . '.php';
+        // Debug: record attempted path and existence
+        if (method_exists(__CLASS__, 'debug_log_append')) {
+            self::debug_log_append('[ajax_get_style_template] path=' . $path . ' exists=' . (file_exists($path) ? 'yes' : 'no'));
+        }
+        if (! file_exists($path)) {
+            wp_send_json_error('notfound');
+        }
+        $content = file_get_contents($path);
+        // Return raw file content (preserve PHP tags) so editor shows exact template source
+        wp_send_json_success(array('content' => $content));
+    }
+
+    public static function ajax_preview_template() {
+        if (! current_user_can('manage_options')) {
+            wp_send_json_error('permission');
+        }
+        // nonce required
+        if (! isset($_REQUEST['nonce']) || ! check_ajax_referer('pcn_preview_template', 'nonce', false)) {
+            wp_send_json_error('invalid_nonce');
+        }
+
+        $name = isset($_REQUEST['name']) ? sanitize_text_field($_REQUEST['name']) : '';
+        if (! in_array($name, array('reply','new_comment','pending'), true)) {
+            wp_send_json_error('invalid_name');
+        }
+
+        // Prefer provided content (current editor) to allow preview without saving
+        // Preserve submitted source (do not strip PHP tags)
+        $content = isset($_REQUEST['content']) ? wp_unslash($_REQUEST['content']) : '';
+
+        if ($content === '') {
+            // fallback to saved templates (option or files)
+            $saved = get_option('pcn_templates', array());
+            if (! empty($saved) && isset($saved[$name])) {
+                $content = $saved[$name];
+            } else {
+                $base = PCN_PLUGIN_DIR . 'includes/templates/';
+                // try style-selected file
+                $styles = get_option('pcn_template_style', array());
+                $style = isset($styles[$name]) ? $styles[$name] : '';
+                if ($style) {
+                    $p = $base . 'styles/' . $style . '/' . $name . '.php';
+                    if (file_exists($p)) { $content = file_get_contents($p); }
+                }
+                if ($content === '') {
+                    $p2 = $base . $name . '.php';
+                    if (file_exists($p2)) { $content = file_get_contents($p2); }
+                }
+            }
+        }
+
+        if ($content === '') {
+            wp_send_json_error('empty_template');
+        }
+
+        // Replace common placeholders with sample data for preview
+        $placeholders = array(
+            '{{blogname}}' => esc_html(get_bloginfo('name')),
+            '{{parent_author}}' => '示例用户',
+            '{{parent_content}}' => '<p>这是一条示例评论内容。</p>',
+            '{{reply_author}}' => '回复者',
+            '{{reply_content}}' => '<p>这是示例回复内容，包含 <strong>富文本</strong>。</p>',
+            '{{comment_link}}' => esc_url(home_url('/?p=1#comment-1')),
+            '{{unsubscribe_url}}' => esc_url(home_url('/?unsubscribe=1')),
+            '{{author}}' => '评论作者',
+            '{{content}}' => '<p>示例评论文本</p>',
+            '{{post_title}}' => '示例文章标题',
+            '{{comment_id}}' => '123',
+            '{{comments_waiting}}' => '5',
+            '{{approve_url}}' => esc_url(admin_url('comment.php?action=approve&c=123')),
+            '{{trash_url}}' => esc_url(admin_url('comment.php?action=trash&c=123')),
+            '{{spam_url}}' => esc_url(admin_url('comment.php?action=spam&c=123')),
+        );
+
+        // Perform a simple replacement (templates are expected to be HTML with placeholders)
+        $rendered = strtr($content, $placeholders);
+
+        // If returned content contains PHP tags, strip them to avoid executing server-side code in preview
+        $rendered = preg_replace('#<\?(?:php)?[\s\S]*?\?>#i', '', $rendered);
+
+        wp_send_json_success(array('html' => $rendered));
     }
 
     public static function debug_log_append($line) {
