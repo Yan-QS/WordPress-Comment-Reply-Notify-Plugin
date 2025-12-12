@@ -260,3 +260,73 @@ msgstr "Refreshing..."
 msgid "刷新队列状态"
 msgstr "Refresh queue status"
 
+
+msgid "链接无效或已被篡改。"
+msgstr "Link invalid or tampered."
+
+msgid "错误"
+msgstr "Error"
+
+msgid "链接已过期。请在后台重新生成并发送邮件。"
+msgstr "Link expired. Please regenerate and send the email from admin."
+
+msgid "链接过期"
+msgstr "Link expired"
+
+msgid "该邮箱已取消订阅，无需重复操作。"
+msgstr "This email is already unsubscribed; no action needed."
+
+msgid "已取消订阅"
+msgstr "Already unsubscribed"
+
+msgid "您已成功取消订阅本站的评论回复通知。"
+msgstr "You have successfully unsubscribed from comment reply notifications."
+
+msgid "取消订阅成功"
+msgstr "Unsubscribe successful"
+
+msgid "Invalid request"
+msgstr "Invalid request"
+
+msgid "Too many unsubscribe attempts, please try later."
+msgstr "Too many unsubscribe attempts, please try later."
+
+msgid "Signature invalid or tampered."
+msgstr "Signature invalid or tampered."
+
+msgid "Link expired."
+msgstr "Link expired."
+
+msgid "Already unsubscribed."
+msgstr "Already unsubscribed."
+
+msgid "You have been unsubscribed."
+msgstr "You have been unsubscribed."
+
+msgid "Connect"
+msgstr "Connect"
+
+msgid "MX"
+msgstr "MX"
+
+msgid "SPF"
+msgstr "SPF"
+
+msgid "Certificate"
+msgstr "Certificate"
+
+msgid "加载调试日志"
+msgstr "Load debug logs"
+
+msgid "加载失败"
+msgstr "Load failed"
+
+msgid "导出最近 N 天的日志为 CSV（填 0 导出全部）："
+msgstr "Export logs for the last N days as CSV (0 for all):"
+
+msgid "导出 CSV"
+msgstr "Export CSV"
+
+msgid "应用保留策略"
+msgstr "Apply retention policy"
+
