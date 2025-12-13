@@ -26,6 +26,8 @@ class PCN_Settings {
         add_action('wp_ajax_pcn_preview_template', array(__CLASS__, 'ajax_preview_template'));
         // Handle CSV export via admin-post to allow direct download in iframe
         add_action('admin_post_pcn_export_logs', array(__CLASS__, 'export_logs_csv_handler'));
+        // Daily maintenance hook (cron)
+        add_action('pcn_daily_maintenance', array(__CLASS__, 'enforce_log_limits'));
     }
 
     public static function add_admin_menu() {
@@ -102,6 +104,10 @@ class PCN_Settings {
         );
         $queue_nonce = wp_create_nonce('pcn_queue_action');
         $pcn_preview_nonce = wp_create_nonce('pcn_preview_template');
+
+        // Log limits for UI
+        $log_table_max = intval(get_option('pcn_log_table_max', 1000));
+        $logs_option_limit = intval(get_option('pcn_logs_option_limit', 200));
 
         // Include view
         include PCN_PLUGIN_DIR . 'includes/views/settings-page.php';
@@ -818,6 +824,12 @@ class PCN_Settings {
         if (! empty($styles)) {
             update_option('pcn_template_style', $styles);
         }
+
+        // Log limits: table max rows and option stored logs cap
+        $log_table_max = isset($_POST['pcn_log_table_max']) ? max(0, intval($_POST['pcn_log_table_max'])) : intval(get_option('pcn_log_table_max', 1000));
+        update_option('pcn_log_table_max', $log_table_max);
+        $logs_option_limit = isset($_POST['pcn_logs_option_limit']) ? max(0, intval($_POST['pcn_logs_option_limit'])) : intval(get_option('pcn_logs_option_limit', 200));
+        update_option('pcn_logs_option_limit', $logs_option_limit);
 
         echo '<div class="updated"><p>' . __('设置已保存。', 'wp-comment-notify') . '</p></div>';
     }

@@ -57,11 +57,17 @@ function pcn_activate() {
 
     require_once ABSPATH . 'wp-admin/includes/upgrade.php';
     dbDelta($sql);
+    // Schedule daily maintenance to enforce log limits
+    if (! wp_next_scheduled('pcn_daily_maintenance')) {
+        wp_schedule_event(time(), 'daily', 'pcn_daily_maintenance');
+    }
 }
 register_activation_hook(__FILE__, 'pcn_activate');
 
 function pcn_deactivate() {
     // 卸载时不删除设置，以便用户重新激活
+    // Clear scheduled maintenance
+    wp_clear_scheduled_hook('pcn_daily_maintenance');
 }
 register_deactivation_hook(__FILE__, 'pcn_deactivate');
 

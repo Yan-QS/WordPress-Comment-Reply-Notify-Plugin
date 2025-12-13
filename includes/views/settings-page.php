@@ -643,6 +643,19 @@
 
         <h3><?php _e('SMTP 调试日志', 'wp-comment-notify'); ?></h3>
         <p>
+            <label><?php _e('日志表最大行数（pcn_log_table_max）', 'wp-comment-notify'); ?>: 
+                <input type="number" name="pcn_log_table_max" value="<?php echo esc_attr($log_table_max ?? 1000); ?>" class="small-text" />
+            </label>
+            <span class="description"><?php _e('数据库表中保留最近 N 条邮件发送记录，0 表示不限制。', 'wp-comment-notify'); ?></span>
+        </p>
+        <p>
+            <label><?php _e('Option 日志上限（pcn_logs_option_limit）', 'wp-comment-notify'); ?>: 
+                <input type="number" name="pcn_logs_option_limit" value="<?php echo esc_attr($logs_option_limit ?? 200); ?>" class="small-text" />
+            </label>
+            <span class="description"><?php _e('当回退到 option 存储日志时，最多保留多少条（避免 options 过大）。', 'wp-comment-notify'); ?></span>
+        </p>
+
+        <p>
             <button type="button" id="pcn-load-debug-logs" class="button"><?php esc_html_e('加载调试日志', 'wp-comment-notify'); ?></button>
             <input type="submit" name="pcn_clear_debug_logs" class="button" value="<?php esc_attr_e('清空调试日志', 'wp-comment-notify'); ?>" />
             <span class="description"><?php _e('发送测试邮件后会自动加载最新的调试日志。', 'wp-comment-notify'); ?></span>
