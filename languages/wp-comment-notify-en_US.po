@@ -361,3 +361,143 @@ msgstr "Plain"
 msgid "Compact"
 msgstr "Compact"
 
+
+# Newly discovered strings (auto-added to ensure no omissions)
+msgid "Host"
+msgstr "Host"
+
+msgid "Option 日志上限（pcn_logs_option_limit）"
+msgstr "Option logs limit (pcn_logs_option_limit)"
+
+msgid "SMTP 测试"
+msgstr "SMTP Test"
+
+msgid "SMTP 调试日志"
+msgstr "SMTP Debug Logs"
+
+msgid "为安全起见，此处不回显保存的密码。若需通过环境变量提供，请在 wp-config.php 中定义 `PCN_SMTP_PASSWORD`。"
+msgstr "For security, saved passwords are not echoed here. To provide via environment variable, define `PCN_SMTP_PASSWORD` in wp-config.php."
+
+msgid "仪表盘与统计"
+msgstr "Dashboard & Statistics"
+
+msgid "出于安全考虑，刷新令牌不会明文回显。可在 wp-config.php 中定义 `PCN_SMTP_REFRESH_TOKEN`，或在此处填写并保存（会以加密形式存储）。"
+msgstr "For security, refresh tokens are not echoed in plaintext. Define `PCN_SMTP_REFRESH_TOKEN` in wp-config.php, or enter and save it here (it will be stored encrypted)."
+
+msgid "刷新失败"
+msgstr "Refresh failed"
+
+msgid "发送失败"
+msgstr "Send failed"
+
+msgid "发送测试邮件后会自动加载最新的调试日志。"
+msgstr "After sending a test email, the latest debug logs will be loaded automatically."
+
+msgid "可用变量：{{blogname}}, {{parent_author}}, {{parent_content}}, {{reply_author}}, {{reply_content}}, {{comment_link}}, {{unsubscribe_url}}"
+msgstr "Available variables: {{blogname}}, {{parent_author}}, {{parent_content}}, {{reply_author}}, {{reply_content}}, {{comment_link}}, {{unsubscribe_url}}"
+
+msgid "启用异步邮件队列以减少请求阻塞并支持重试/重试退避。"
+msgstr "Enable asynchronous mail queue to reduce request blocking and support retries/backoff."
+
+msgid "启用异步队列（推荐）"
+msgstr "Enable queueing (recommended)"
+
+msgid "启用队列"
+msgstr "Enable queue"
+
+msgid "天"
+msgstr "Days"
+
+msgid "客户端密钥不会明文回显。可在 wp-config.php 中定义 `PCN_SMTP_CLIENT_SECRET`，或在此处填写并保存（会以加密形式存储）。"
+msgstr "Client secret will not be echoed in plaintext. Define `PCN_SMTP_CLIENT_SECRET` in wp-config.php, or enter and save it here (it will be stored encrypted)."
+
+msgid "导出与保留策略"
+msgstr "Export & Retention Policy"
+
+msgid "已发送（成功）"
+msgstr "Sent (Success)"
+
+msgid "已应用保留策略：保留最近 %d 天的日志，其余已删除。"
+msgstr "Retention applied: kept logs for the last %d days, others deleted."
+
+msgid "已清空 SMTP 调试日志。"
+msgstr "SMTP debug logs cleared."
+
+msgid "已清除敏感凭据（后台已不再回显）。建议使用环境变量提供凭据。"
+msgstr "Sensitive credentials cleared (no longer echoed in admin). It's recommended to provide credentials via environment variables."
+
+msgid "当前队列中有 %d 条待发送邮件。"
+msgstr "There are %d emails pending in the queue."
+
+msgid "当回退到 option 存储日志时，最多保留多少条（避免 options 过大）。"
+msgstr "When falling back to option-based log storage, how many entries to keep (to avoid oversized options)."
+
+msgid "批次大小"
+msgstr "Batch size"
+
+msgid "数据库表中保留最近 N 条邮件发送记录，0 表示不限制。"
+msgstr "Keep the most recent N email send records in the DB table, 0 for unlimited."
+
+msgid "无效的请求（nonce 校验失败）"
+msgstr "Invalid request (nonce verification failed)"
+
+msgid "无权限"
+msgstr "Insufficient permissions"
+
+msgid "日志表最大行数（pcn_log_table_max）"
+msgstr "Log table max rows (pcn_log_table_max)"
+
+msgid "暂无队列处理记录。"
+msgstr "No queue processing records."
+
+msgid "最大重试次数"
+msgstr "Maximum retry attempts"
+
+msgid "最近队列处理记录："
+msgstr "Recent queue processing records:"
+
+msgid "每次处理队列的最大邮件数。"
+msgstr "Maximum emails processed per queue run."
+
+msgid "清空失败"
+msgstr "Failed to clear"
+
+msgid "清空队列"
+msgstr "Clear queue"
+
+msgid "确定要清空邮件队列吗？此操作不可恢复。"
+msgstr "Are you sure you want to clear the mail queue? This action cannot be undone."
+
+msgid "立即处理队列"
+msgstr "Process queue now"
+
+msgid "设置保留策略：删除早于 N 天的日志（谨慎操作）："
+msgstr "Set retention policy: delete logs older than N days (use with caution):"
+
+msgid "请提供大于 0 的保留天数。"
+msgstr "Please provide a retention days value greater than 0."
+
+msgid "超过次数后将放弃并记录错误。"
+msgstr "After exceeding attempts the email will be abandoned and an error logged."
+
+msgid "退订数"
+msgstr "Unsubscribe count"
+
+msgid "邮件队列已清空。"
+msgstr "Mail queue cleared."
+
+msgid "邮件队列设置"
+msgstr "Mail queue settings"
+
+msgid "队列处理器不可用。"
+msgstr "Queue processor unavailable."
+
+msgid "队列已处理（尽可能处理批次内邮件）。"
+msgstr "Queue processed (attempted to process all emails in batch)."
+
+msgid "队列已处理，已更新记录。"
+msgstr "Queue processed, records updated."
+
+msgid "队列操作"
+msgstr "Queue operations"
+
