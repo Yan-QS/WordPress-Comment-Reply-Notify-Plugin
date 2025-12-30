@@ -249,6 +249,35 @@ class PCN_Settings {
             delete_option('pcn_email_queue');
             echo '<div class="updated"><p>' . __('邮件队列已清空。', 'wp-comment-notify') . '</p></div>';
         }
+
+        // Unsubscribe management (add/remove)
+        if (isset($_POST['pcn_unsub_add']) && check_admin_referer('pcn_save_settings')) {
+            $email = sanitize_email($_POST['pcn_unsub_email'] ?? '');
+            if (! empty($email) && is_email($email)) {
+                $blocklist = get_option('pcn_unsubscribe_list', array());
+                if (! is_array($blocklist)) { $blocklist = array(); }
+                $blocklist[$email] = time();
+                update_option('pcn_unsubscribe_list', $blocklist, false);
+                echo '<div class="updated"><p>' . sprintf(__('已将 %s 标记为退订。', 'wp-comment-notify'), esc_html($email)) . '</p></div>';
+            } else {
+                echo '<div class="error"><p>' . __('邮箱无效，无法退订。', 'wp-comment-notify') . '</p></div>';
+            }
+        }
+
+        if (isset($_POST['pcn_unsub_remove']) && check_admin_referer('pcn_save_settings')) {
+            $email = sanitize_email($_POST['pcn_unsub_email'] ?? '');
+            if (! empty($email) && is_email($email)) {
+                $blocklist = get_option('pcn_unsubscribe_list', array());
+                if (! is_array($blocklist)) { $blocklist = array(); }
+                if (isset($blocklist[$email])) {
+                    unset($blocklist[$email]);
+                    update_option('pcn_unsubscribe_list', $blocklist, false);
+                }
+                echo '<div class="updated"><p>' . sprintf(__('已取消 %s 的退订状态。', 'wp-comment-notify'), esc_html($email)) . '</p></div>';
+            } else {
+                echo '<div class="error"><p>' . __('邮箱无效，无法取消退订。', 'wp-comment-notify') . '</p></div>';
+            }
+        }
     }
 
     private static function handle_smtp_test() {

@@ -832,6 +832,13 @@
                             var dbg = resp.data.extra.debug_logs || [];
                             $('#pcn-debug-logs').text(dbg.join('\n')).show();
                         }
+
+                        // For unsubscribe management actions, reload to refresh table contents
+                        if (window.pcnUnsubPendingReload) {
+                            window.pcnUnsubPendingReload = false;
+                            window.location.reload();
+                            return;
+                        }
                     } else {
                         alert('<?php echo esc_js(__('请求失败', 'wp-comment-notify')); ?>');
                     }
@@ -839,6 +846,18 @@
                         $btn.prop('disabled', false);
                         alert('<?php echo esc_js(__('请求失败', 'wp-comment-notify')); ?>');
                     });
+            });
+
+            // Unsubscribe management buttons: set email into a hidden input, mark reload flag
+            $(document).on('click', '.pcn-unsub-action-btn', function(){
+                var email = $(this).data('email') || '';
+                // ensure hidden input exists
+                var $h = $form.find('input[name="pcn_unsub_email"]');
+                if (! $h.length) {
+                    $h = $('<input>').attr({ type: 'hidden', name: 'pcn_unsub_email', value: '' }).appendTo($form);
+                }
+                $h.val(email);
+                window.pcnUnsubPendingReload = true;
             });
 
             // Dashboard: load stats and render chart
@@ -948,6 +967,7 @@
                     <tr>
                         <th><?php _e('邮箱', 'wp-comment-notify'); ?></th>
                         <th style="width:120px;"><?php _e('状态', 'wp-comment-notify'); ?></th>
+                        <th style="width:140px;"><?php _e('操作', 'wp-comment-notify'); ?></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -956,10 +976,15 @@
                             <tr>
                                 <td><?php echo esc_html($email); ?></td>
                                 <td><span class="pcn-status-badge pcn-status-valid"><?php _e('有效', 'wp-comment-notify'); ?></span></td>
+                                <td>
+                                    <button type="submit" name="pcn_unsub_add" value="1" class="button pcn-unsub-action-btn" data-email="<?php echo esc_attr($email); ?>">
+                                        <?php _e('退订', 'wp-comment-notify'); ?>
+                                    </button>
+                                </td>
                             </tr>
                         <?php endforeach; ?>
                     <?php else: ?>
-                        <tr><td colspan="2"><?php _e('暂无数据（尚未在发送记录/队列中发现收件人邮箱）。', 'wp-comment-notify'); ?></td></tr>
+                        <tr><td colspan="3"><?php _e('暂无数据（尚未在发送记录/队列中发现收件人邮箱）。', 'wp-comment-notify'); ?></td></tr>
                     <?php endif; ?>
                 </tbody>
             </table>
@@ -973,6 +998,7 @@
                         <th><?php _e('邮箱', 'wp-comment-notify'); ?></th>
                         <th style="width:200px;"><?php _e('退订时间', 'wp-comment-notify'); ?></th>
                         <th style="width:120px;"><?php _e('状态', 'wp-comment-notify'); ?></th>
+                        <th style="width:140px;"><?php _e('操作', 'wp-comment-notify'); ?></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -990,10 +1016,15 @@
                                     ?>
                                 </td>
                                 <td><span class="pcn-status-badge pcn-status-invalid"><?php _e('已退订', 'wp-comment-notify'); ?></span></td>
+                                <td>
+                                    <button type="submit" name="pcn_unsub_remove" value="1" class="button pcn-unsub-action-btn" data-email="<?php echo esc_attr($email); ?>">
+                                        <?php _e('取消退订', 'wp-comment-notify'); ?>
+                                    </button>
+                                </td>
                             </tr>
                         <?php endforeach; ?>
                     <?php else: ?>
-                        <tr><td colspan="3"><?php _e('暂无退订邮箱。', 'wp-comment-notify'); ?></td></tr>
+                        <tr><td colspan="4"><?php _e('暂无退订邮箱。', 'wp-comment-notify'); ?></td></tr>
                     <?php endif; ?>
                 </tbody>
             </table>
