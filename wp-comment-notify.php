@@ -29,9 +29,12 @@ PCN_Unsubscribe::init();
 require_once PCN_PLUGIN_DIR . 'includes/class-pcn-mailer.php';
 PCN_Mailer::init();
 
-// 后台管理页面（仅在 admin 请求时加载）
+// 加载设置类（包含加解密/调试日志等通用能力）。
+// 注意：即使在前台/cron 场景，也需要可用的 decrypt_value() 以便 SMTP 发信可解密密码。
+require_once PCN_PLUGIN_DIR . 'includes/class-pcn-settings.php';
+
+// 后台管理页面（仅在 admin 请求时注册管理界面与设置项）
 if (is_admin()) {
-    require_once PCN_PLUGIN_DIR . 'includes/class-pcn-settings.php';
     PCN_Settings::init();
 }
 
