@@ -83,6 +83,74 @@ class PCN_Settings {
 
         $debug_logs = get_option('pcn_debug_log', array());
 
+        // Unsubscribe management data
+        $pcn_unsubscribe_list = get_option('pcn_unsubscribe_list', array());
+        if (! is_array($pcn_unsubscribe_list)) {
+            $pcn_unsubscribe_list = array();
+        }
+        $pcn_unsubscribed_emails = array();
+        foreach ($pcn_unsubscribe_list as $email => $ts) {
+            $email = sanitize_email($email);
+            if (! empty($email) && is_email($email)) {
+                $pcn_unsubscribed_emails[strtolower($email)] = is_numeric($ts) ? intval($ts) : 0;
+            }
+        }
+
+        // Best-effort: derive "known subscribed" from recipients seen in logs/queue, excluding unsubscribed.
+        $pcn_known_emails = array();
+
+        // 1) Option-based logs fallback
+        if (is_array($logs)) {
+            foreach ($logs as $row) {
+                if (is_array($row) && ! empty($row['to'])) {
+                    $pcn_known_emails[] = $row['to'];
+                }
+            }
+        }
+
+        // 2) Queue (pending emails)
+        $queue_opt = get_option('pcn_email_queue', array());
+        if (is_array($queue_opt)) {
+            foreach ($queue_opt as $item) {
+                if (is_array($item) && ! empty($item['to'])) {
+                    $pcn_known_emails[] = $item['to'];
+                }
+            }
+        }
+
+        // 3) DB table logs if available
+        global $wpdb;
+        if (isset($wpdb) && $wpdb) {
+            $table = $wpdb->prefix . 'pcn_email_logs';
+            $check = $wpdb->get_results($wpdb->prepare("SHOW TABLES LIKE %s", $wpdb->esc_like($table)));
+            if (! empty($check)) {
+                $rows = $wpdb->get_col("SELECT DISTINCT `to` FROM {$table} WHERE `to` <> '' LIMIT 5000");
+                if (is_array($rows)) {
+                    foreach ($rows as $to) {
+                        if (! empty($to)) {
+                            $pcn_known_emails[] = $to;
+                        }
+                    }
+                }
+            }
+        }
+
+        $pcn_known_emails_norm = array();
+        foreach ($pcn_known_emails as $email) {
+            $email = sanitize_email($email);
+            if (! empty($email) && is_email($email)) {
+                $pcn_known_emails_norm[strtolower($email)] = true;
+            }
+        }
+
+        $pcn_subscribed_emails = array();
+        foreach ($pcn_known_emails_norm as $email => $_) {
+            if (! isset($pcn_unsubscribed_emails[$email])) {
+                $pcn_subscribed_emails[] = $email;
+            }
+        }
+        sort($pcn_subscribed_emails, SORT_STRING);
+
         // Enforce configured log limits (prune DB table or option storage to configured caps)
         if (is_admin() && current_user_can('manage_options')) {
             self::enforce_log_limits();

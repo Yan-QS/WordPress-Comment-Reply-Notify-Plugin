@@ -104,6 +104,7 @@
         <a href="#" class="pcn-nav-tab" data-target="tab-templates"><?php _e('邮件模板', 'wp-comment-notify'); ?></a>
         <a href="#" class="pcn-nav-tab" data-target="tab-test"><?php _e('SMTP 测试', 'wp-comment-notify'); ?></a>
         <a href="#" class="pcn-nav-tab" data-target="tab-logs"><?php _e('发送记录', 'wp-comment-notify'); ?></a>
+        <a href="#" class="pcn-nav-tab" data-target="tab-unsubscribe"><?php _e('退订管理', 'wp-comment-notify'); ?></a>
     </div>
 
     <form method="post">
@@ -927,6 +928,77 @@
             });
         });
         </script>
+
+    </div> <!-- End tab-logs -->
+
+    <div id="tab-unsubscribe" class="pcn-tab-content">
+        <h2><?php _e('退订管理', 'wp-comment-notify'); ?></h2>
+
+        <div class="pcn-card">
+            <h3><?php _e('说明', 'wp-comment-notify'); ?></h3>
+            <p class="description">
+                <?php _e('插件不会维护一份“全站订阅邮箱名单”。这里的“有效订阅（已知）”是根据发送记录/队列中出现过的收件人邮箱推断得出，并排除已退订邮箱，作为管理参考。', 'wp-comment-notify'); ?>
+            </p>
+        </div>
+
+        <div class="pcn-card">
+            <h3><?php _e('有效订阅（已知）', 'wp-comment-notify'); ?> (<?php echo esc_html(is_array($pcn_subscribed_emails ?? null) ? count($pcn_subscribed_emails) : 0); ?>)</h3>
+            <table class="widefat fixed striped">
+                <thead>
+                    <tr>
+                        <th><?php _e('邮箱', 'wp-comment-notify'); ?></th>
+                        <th style="width:120px;"><?php _e('状态', 'wp-comment-notify'); ?></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if (! empty($pcn_subscribed_emails) && is_array($pcn_subscribed_emails)): ?>
+                        <?php foreach ($pcn_subscribed_emails as $email): ?>
+                            <tr>
+                                <td><?php echo esc_html($email); ?></td>
+                                <td><span class="pcn-status-badge pcn-status-valid"><?php _e('有效', 'wp-comment-notify'); ?></span></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <tr><td colspan="2"><?php _e('暂无数据（尚未在发送记录/队列中发现收件人邮箱）。', 'wp-comment-notify'); ?></td></tr>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="pcn-card">
+            <h3><?php _e('已退订', 'wp-comment-notify'); ?> (<?php echo esc_html(is_array($pcn_unsubscribed_emails ?? null) ? count($pcn_unsubscribed_emails) : 0); ?>)</h3>
+            <table class="widefat fixed striped">
+                <thead>
+                    <tr>
+                        <th><?php _e('邮箱', 'wp-comment-notify'); ?></th>
+                        <th style="width:200px;"><?php _e('退订时间', 'wp-comment-notify'); ?></th>
+                        <th style="width:120px;"><?php _e('状态', 'wp-comment-notify'); ?></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if (! empty($pcn_unsubscribed_emails) && is_array($pcn_unsubscribed_emails)): ?>
+                        <?php foreach ($pcn_unsubscribed_emails as $email => $ts): ?>
+                            <tr>
+                                <td><?php echo esc_html($email); ?></td>
+                                <td>
+                                    <?php
+                                        $when = '';
+                                        if (! empty($ts) && is_numeric($ts)) {
+                                            $when = function_exists('date_i18n') ? date_i18n('Y-m-d H:i:s', intval($ts)) : date('Y-m-d H:i:s', intval($ts));
+                                        }
+                                        echo esc_html($when ?: '-');
+                                    ?>
+                                </td>
+                                <td><span class="pcn-status-badge pcn-status-invalid"><?php _e('已退订', 'wp-comment-notify'); ?></span></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <tr><td colspan="3"><?php _e('暂无退订邮箱。', 'wp-comment-notify'); ?></td></tr>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        </div>
+    </div> <!-- End tab-unsubscribe -->
     </form>
         <script>
             jQuery(function($){
@@ -964,5 +1036,4 @@
                 });
             });
         </script>
-    </div> <!-- End tab-logs -->
 </div> <!-- End wrap -->
