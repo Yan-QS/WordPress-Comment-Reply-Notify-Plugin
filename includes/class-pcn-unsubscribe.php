@@ -5,6 +5,43 @@ if (! defined('ABSPATH')) {
 
 class PCN_Unsubscribe {
 
+    private static function get_request_ip($request) {
+        $server = array();
+        if (is_object($request) && method_exists($request, 'get_server_params')) {
+            $server = (array) $request->get_server_params();
+        } else if (! empty($_SERVER) && is_array($_SERVER)) {
+            $server = $_SERVER;
+        }
+
+        $ip = '';
+        if (! empty($server['REMOTE_ADDR'])) {
+            $ip = trim((string) $server['REMOTE_ADDR']);
+        }
+
+        // Fallback to common proxy headers (best-effort; used only for rate limiting/logging)
+        if (empty($ip) && is_object($request) && method_exists($request, 'get_header')) {
+            $candidates = array(
+                $request->get_header('cf-connecting-ip'),
+                $request->get_header('x-real-ip'),
+                $request->get_header('x-forwarded-for'),
+            );
+            foreach ($candidates as $h) {
+                if (! empty($h)) {
+                    $raw = trim((string) $h);
+                    // x-forwarded-for may contain a list
+                    $parts = explode(',', $raw);
+                    $maybe = trim((string) ($parts[0] ?? ''));
+                    if ($maybe !== '') {
+                        $ip = $maybe;
+                        break;
+                    }
+                }
+            }
+        }
+
+        return $ip;
+    }
+
     public static function init() {
         add_action('init', array(__CLASS__, 'handle_unsubscribe_request'));
         // Register REST routes for secure unsubscribe link handling
@@ -76,9 +113,7 @@ class PCN_Unsubscribe {
         }
 
         // Rate limiting: limit to 10 attempts per hour per IP+email
-        $ip = '';
-        $server = $request->get_server_params();
-        if (! empty($server['REMOTE_ADDR'])) { $ip = $server['REMOTE_ADDR']; }
+        $ip = self::get_request_ip($request);
         $rl_key = 'pcn_unsub_rl_' . md5($ip . '|' . $email);
         $rl = get_transient($rl_key);
         if (! is_array($rl)) { $rl = array('count' => 0, 'first' => time()); }
