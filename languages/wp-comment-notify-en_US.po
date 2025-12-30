@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: WP Comment & Reply Notify\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2023-10-27 12:00+0000\n"
-"PO-Revision-Date: 2025-12-12 00:00+0000\n"
+"PO-Revision-Date: 2025-12-30 00:00+0000\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: en_US\n"
@@ -500,4 +500,54 @@ msgstr "Queue processed, records updated."
 
 msgid "队列操作"
 msgstr "Queue operations"
+
+
+# Unsubscribe management
+msgid "退订管理"
+msgstr "Unsubscribe management"
+
+msgid "说明"
+msgstr "Notes"
+
+msgid "插件不会维护一份“全站订阅邮箱名单”。这里的“有效订阅（已知）”是根据发送记录/队列中出现过的收件人邮箱推断得出，并排除已退订邮箱，作为管理参考。"
+msgstr "The plugin does not maintain a site-wide subscription list. The \"Known subscribed\" list is inferred from recipients seen in send logs/queue, excluding unsubscribed emails, for reference only."
+
+msgid "有效订阅（已知）"
+msgstr "Known subscribed"
+
+msgid "邮箱"
+msgstr "Email"
+
+msgid "操作"
+msgstr "Actions"
+
+msgid "退订"
+msgstr "Unsubscribe"
+
+msgid "已退订"
+msgstr "Unsubscribed"
+
+msgid "退订时间"
+msgstr "Unsubscribed at"
+
+msgid "取消退订"
+msgstr "Resubscribe"
+
+msgid "暂无数据（尚未在发送记录/队列中发现收件人邮箱）。"
+msgstr "No data yet (no recipient emails found in logs/queue)."
+
+msgid "暂无退订邮箱。"
+msgstr "No unsubscribed emails."
+
+msgid "已将 %s 标记为退订。"
+msgstr "Marked %s as unsubscribed."
+
+msgid "邮箱无效，无法退订。"
+msgstr "Invalid email; unable to unsubscribe."
+
+msgid "已取消 %s 的退订状态。"
+msgstr "Removed unsubscribe status for %s."
+
+msgid "邮箱无效，无法取消退订。"
+msgstr "Invalid email; unable to resubscribe."
 
