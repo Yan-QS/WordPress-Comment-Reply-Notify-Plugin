@@ -786,6 +786,18 @@
                     return;
                 }
                 e.preventDefault();
+
+                // Unsubscribe management: ensure email is set before serializing
+                if ($btn.hasClass('pcn-unsub-action-btn')) {
+                    var email = $btn.data('email') || '';
+                    var $h = $form.find('input[name="pcn_unsub_email"]');
+                    if (! $h.length) {
+                        $h = $('<input>').attr({ type: 'hidden', name: 'pcn_unsub_email', value: '' }).appendTo($form);
+                    }
+                    $h.val(email);
+                    window.pcnUnsubPendingReload = true;
+                }
+
                 var data = $form.serializeArray();
                 // include secondary nonces that may live outside the main form
                 var extraNonces = ['pcn_test_smtp_nonce','pcn_clear_credentials_nonce','pcn_show_logs_nonce'];
@@ -846,18 +858,6 @@
                         $btn.prop('disabled', false);
                         alert('<?php echo esc_js(__('请求失败', 'wp-comment-notify')); ?>');
                     });
-            });
-
-            // Unsubscribe management buttons: set email into a hidden input, mark reload flag
-            $(document).on('click', '.pcn-unsub-action-btn', function(){
-                var email = $(this).data('email') || '';
-                // ensure hidden input exists
-                var $h = $form.find('input[name="pcn_unsub_email"]');
-                if (! $h.length) {
-                    $h = $('<input>').attr({ type: 'hidden', name: 'pcn_unsub_email', value: '' }).appendTo($form);
-                }
-                $h.val(email);
-                window.pcnUnsubPendingReload = true;
             });
 
             // Dashboard: load stats and render chart
